@@ -1,6 +1,6 @@
 [project]
 name = "onco-causal"
-version = "0.1.0"
+version = "0.2.0"
 description = "Engenharia Preditiva e Inferência Causal na Epidemiologia Ambiental e Oncológica nos 5.570 Municípios Brasileiros"
 readme = "README.md"
 license = { text = "MIT" }
