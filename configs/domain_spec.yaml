@@ -5,6 +5,12 @@ bigquery:
   max_bytes_billed: 1073741824  # Trava estrita de 1 GB por query (Pilar II)
   use_cache: true
 
+spatial:
+  crs_proj: "EPSG:5070"  # SIRGAS 2000 / Brazil Albers Equal Area
+  knn_neighbors: 31
+  ottobacias_level: 4
+  dead_zone_buffer_km: 30.0
+
 sampling:
   min_population: 50000
   base_year_pop: 2020

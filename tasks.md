@@ -1,7 +1,7 @@
-# tasks.md — Plano de Execução: Auditoria, Hardening e Stage 02 (Ingestão Multissetorial BigQuery & Padronização Etária)
+# tasks.md — Plano de Execução: Stage 03 (Geoprocessamento, Suavização Bayesiana PySAL e Blocagem Anti-Vazamento)
 
-> **Status Global:** ✅ STAGE 01 E STAGE 02 CONCLUÍDOS COM AUDITORIA E SUCESSO  
-> **Escopo:** Hardening de Paradigma (Fase 5), Stage 02A (Controles, PAM, RAIS/LINACH e Estrato 4 - Fase 6) e Stage 02B (SIM e Padronização Etária - Fase 7).  
+> **Status Global:** ✅ STAGES 01, 02 E 03 CONCLUÍDOS COM AUDITORIA E SUCESSO  
+> **Escopo:** Fase 8 (Stage 03A: Malhas e Sedes), Fase 9 (Stage 03B: Suavização Bayesiana SMR k=31), Fase 10 (Stage 03C: Nested SBCV + Dead-Zone 30km) e Fase 11 (Stage 03D: Auditoria e Qualidade).  
 > **Conformidade:** @AGENTS.md, @PROJECT_SPEC.md, @OBJETIVO.md e @METODOLOGIA.md.
 
 ---
@@ -195,3 +195,174 @@
 
 ### Checkpoint de Paradigma 7
 - [x] Relatório final de melhorias no paradigma de desenvolvimento do projeto para subsidiar o início do Stage 03 (Geoespacial e Suavização Bayesiana Empírica $k=31$).
+
+---
+
+## Fase 8: Stage 03A — Arquitetura Espacial e Malhas Base (Sedes Municipais e Ottobacias Nível 4)
+
+### Tarefa 8.1: Governança de Dependências Geoespaciais e Parâmetros de Projeção
+- **Descrição:** Auditar o ambiente de execução Python 3.14 via `uv` para assegurar o funcionamento integrado de `geopandas`, `libpysal`, `esda`, `shapely`, `pyarrow` e ferramentas de blocagem espacial. Adicionar os parâmetros da projeção de área equivalente `EPSG:5070` (Brazil Albers / SIRGAS 2000) e parâmetros de raio de vizinhança ($k=31$) na especificação de domínio `configs/domain_spec.yaml` e nos modelos tipados de `src/core/settings.py`.
+- **Critérios de Aceite:**
+  - [x] Verificar disponibilidade e versões de `geopandas`, `libpysal`, `esda` e `shapely` no ambiente `uv`.
+  - [x] Adicionar parâmetros geoespaciais em `configs/domain_spec.yaml`:
+    - `spatial.crs_proj`: `"EPSG:5070"` (SIRGAS 2000 / Brazil Albers Equal Area).
+    - `spatial.knn_neighbors`: `31`.
+    - `spatial.ottobacias_level`: `4`.
+    - `spatial.dead_zone_buffer_km`: `30.0`.
+  - [x] Tipar as configurações de geoprocessamento em `src/core/settings.py` (`DomainSpec`).
+- **Verificação:** `uv run python -c "import geopandas, libpysal, esda, shapely; print('Geo stack OK')"` e `uv run pytest -m "unit"`
+- **Dependências:** Fase 7.
+- **Arquivos impactados:** `pyproject.toml`, `configs/domain_spec.yaml`, `src/core/settings.py`.
+- **Escopo estimado:** S (3 arquivos).
+
+### Tarefa 8.2: Ingestão, Reprojeção e Validação das Sedes Municipais e Ottobacias ANA (`src/spatial/geometries.py`)
+- **Descrição:** Desenvolver o módulo reprodutível de ingestão e preparação das malhas vetoriais oficiais: as Sedes Municipais do IBGE (coordenadas pontuais oficiais dos 5.570 municípios) e as Ottobacias Nível 4 da ANA (polígonos de bacias hidrográficas). Ambas as camadas devem ser validadas e reprojetadas para `EPSG:5070`.
+- **Critérios de Aceite:**
+  - [x] Criar módulo `src/spatial/geometries.py` com funções determinísticas:
+    - `load_municipal_seats(domain_spec) -> gpd.GeoDataFrame`: Ingestão das sedes municipais IBGE com chave `id_municipio` (7 dígitos) e geometria pontual (`Point`), reprojetada para `EPSG:5070`.
+    - `load_ottobacias_level4(domain_spec) -> gpd.GeoDataFrame`: Ingestão dos polígonos das Ottobacias Nível 4 da ANA com identificador `ottobacia_id`, reprojetados para `EPSG:5070`.
+  - [x] Garantir armazenamento imutável de artefatos brutos em `data/raw/geometries/`.
+  - [x] Validar que exatamente 5.570 sedes municipais válidas são carregadas e indexadas.
+- **Verificação:** `uv run python -m src.spatial.geometries`
+- **Dependências:** 8.1.
+- **Arquivos impactados:** `src/spatial/geometries.py`.
+- **Escopo estimado:** M (1–2 arquivos).
+
+### Tarefa 8.3: Spatial Join Sede-Bacia Nível 4 e Contrato Geométrico Imutável (`src/spatial/ottobacias.py`)
+- **Descrição:** Executar o cruzamento espacial (*Spatial Join*) estrito baseado na decisão de fronteira da Chefia de Pesquisa: o ponto da **Sede Municipal** dentro do polígono da Ottobacia Nível 4 (`sedes within ottobacias`). Definir contrato de dados imutável, persistir em Parquet e registrar no manifesto de linhagem.
+- **Critérios de Aceite:**
+  - [x] Criar módulo `src/spatial/ottobacias.py` implementando `assign_ottobacias(gdf_sedes, gdf_ottobacias) -> pl.DataFrame`.
+  - [x] Tratamento determinístico de exceções costeiras ou ilhas (se houver sede em polígono de borda marinha, atribuir bacia de menor distância euclidiana via `nearest_join`).
+  - [x] Definir contrato de dados `SPATIAL_GEOMETRIES_CONTRACT` em `src/core/contracts.py`:
+    - PK obrigatória: `("id_municipio",)`.
+    - Colunas: `id_municipio` (String, 7 dígitos), `ottobacia_id` (String), `latitude_sede` (Float64), `longitude_sede` (Float64), `x_proj_5070` (Float64), `y_proj_5070` (Float64).
+    - Validação de 0 nulos em `id_municipio` e `ottobacia_id`.
+  - [x] Persistir em `data/staging/spatial_municipios_ottobacias.parquet` (`zstd`) com registro no `manifest.json`.
+- **Verificação:** `uv run python -m src.spatial.ottobacias` e teste com `pytest`.
+- **Dependências:** 8.2.
+- **Arquivos impactados:** `src/spatial/ottobacias.py`, `src/core/contracts.py`.
+- **Escopo estimado:** M (2 arquivos).
+
+### Checkpoint de Paradigma 8
+- [x] Sedes municipais dos 5.570 municípios mapeadas e projetadas em `EPSG:5070`.
+- [x] Atribuição de Ottobacia Nível 4 aprovada no `DataContract` e registrada no `manifest.json`.
+
+---
+
+## Fase 9: Stage 03B — Suavização Bayesiana Empírica da SMR (A Regra da Dupla Malha $k=31$)
+
+### Tarefa 9.1: Construção da Matriz de Pesos Espaciais $W$ (KNN $k=31$ Sedes) e Suavização Bayesiana (`src/spatial/empirical_bayes.py`)
+- **Descrição:** Implementar o algoritmo de Suavização Bayesiana Empírica Espacial Linear (*Spatial Linear Empirical Bayes*) aplicado estritamente sobre a **Razão de Mortalidade Padronizada (`SMR`)**, utilizando a matriz de vizinhança de $k=31$ vizinhos mais próximos construída a partir das coordenadas das **Sedes Municipais** na malha nacional integral de 5.570 municípios (Regra da Dupla Malha).
+- **Critérios de Aceite:**
+  - [x] Criar módulo `src/spatial/empirical_bayes.py`.
+  - [x] Construir a matriz de pesos $W$ com `libpysal.weights.KNN.from_dataframe(gdf_sedes, k=31)` em `EPSG:5070`.
+  - [x] Ingerir dados de `data/staging/sim_taxas_padronizadas_5570.parquet` ($O_{i,c}$, $E_{i,c}$, $\text{SMR}_{i,c}$).
+  - [x] Executar o `esda.smoothing.Spatial_Empirical_Bayes(O, E, w)` para cada par `(ano, target_cancer)`.
+  - [x] Extrair a taxa suavizada `smr_suavizada_eb` e o fator de encolhimento $w_i$.
+  - [x] Garantir que em municípios de grande porte ($P_i > 100\text{k}$) $w_i \to 1$, e em municípios de pequeno porte ($P_i < 10\text{k}$) $w_i \to 0$, reduzindo a variância espúria.
+- **Verificação:** `uv run python -m src.spatial.empirical_bayes` e inspeção de estatísticas resumo.
+- **Dependências:** Fase 8, Fase 7.
+- **Arquivos impactados:** `src/spatial/empirical_bayes.py`.
+- **Escopo estimado:** M (1–2 arquivos).
+
+### Tarefa 9.2: Contrato de Dados, Materialização Parquet e Rastreabilidade (`src/core/contracts.py`)
+- **Descrição:** Formalizar o contrato de governança para as taxas suavizadas, persistir o artefato Parquet enriquecido e auditar a linhagem criptográfica via `LineageTracker`.
+- **Critérios de Aceite:**
+  - [x] Definir `SIM_TAXAS_SUAVIZADAS_EB_CONTRACT` em `src/core/contracts.py`:
+    - PK composta: `("id_municipio", "ano", "target_cancer")`.
+    - Colunas: `id_municipio` (String, 7 dígitos), `ano` (Int64), `target_cancer` (String), `obitos_observados` (Int64), `obitos_esperados` (Float64), `smr_bruta` (Float64), `smr_suavizada_eb` (Float64), `peso_encolhimento_w` (Float64).
+    - Validação de ausência de nulos e valores plausíveis ($\text{smr} \ge 0$, $w \in [0, 1]$).
+  - [x] Persistir em `data/staging/sim_taxas_suavizadas_eb.parquet` (`zstd`).
+  - [x] Atualizar `data/staging/manifest.json` com SHA-256 e contagem de registros.
+- **Verificação:** `uv run pytest -k "test_empirical_bayes"`
+- **Dependências:** 9.1.
+- **Arquivos impactados:** `src/core/contracts.py`, `src/spatial/empirical_bayes.py`.
+- **Escopo estimado:** S (2 arquivos).
+
+### Checkpoint de Paradigma 9
+- [x] Suavização Bayesiana $k=31$ sobre `SMR` executada em todos os 5.570 municípios.
+- [x] Artefato `sim_taxas_suavizadas_eb.parquet` validado e registrado no `manifest.json`.
+
+---
+
+## Fase 10: Stage 03C — Blocagem Anti-Vazamento e 5-Fold Nested SBCV com Dead-Zone
+
+### Tarefa 10.1: Estruturação dos Blocos Hidrográficos e Estratificação Analítica (`src/spatial/cross_validation.py`)
+- **Descrição:** Desenvolver o módulo de validação cruzada aninhada em blocos espaciais (*5-Fold Nested Spatial Block Cross-Validation*). O agrupamento primário é feito pelas Ottobacias Nível 4 (`ottobacia_id`), assegurando independência geométrica dos blocos e preservando a proporção balanceada dos 4 estratos analíticos (`1_Capital`, `2_Polo_Estrategico`, `3_Acima_50k`, `4_Controle_Interno`).
+- **Critérios de Aceite:**
+  - [x] Criar módulo `src/spatial/cross_validation.py`.
+  - [x] Cruzar os 685 municípios analíticos de `municipios_recorte_tabfm.parquet` com os `ottobacia_id` de `spatial_municipios_ottobacias.parquet`.
+  - [x] Particionar os blocos de Ottobacias em 5 folds disjuntos (nenhuma bacia compartilhada entre treino e teste em um mesmo split).
+  - [x] Garantir que cada fold receba uma distribuição balanceada dos 4 estratos analíticos.
+- **Verificação:** `uv run python -m src.spatial.cross_validation`
+- **Dependências:** Fase 8, Fase 9.
+- **Arquivos impactados:** `src/spatial/cross_validation.py`.
+- **Escopo estimado:** M (1–2 arquivos).
+
+### Tarefa 10.2: Implementação da Dead-Zone de Amortecimento Espacial (30 km) e Contrato de Folds
+- **Descrição:** Implementar a zona de exclusão/amortecimento (*dead-zone buffer*) de 30 km nas fronteiras de cada fold de teste. Municípios do conjunto de treino cujas sedes estejam a menos de 30 km de qualquer sede do conjunto de teste são marcados como `buffer_exclusion` naquele fold específico, eliminando autocorrelação residual de vizinhança.
+- **Critérios de Aceite:**
+  - [x] Implementar cálculo de distâncias euclidianas em `EPSG:5070` entre sedes de treino e sedes de teste para cada fold.
+  - [x] Rotular o papel de cada município em cada fold: `train`, `test` ou `buffer_exclusion`.
+  - [x] Definir contrato de dados `SPATIAL_CV_FOLDS_CONTRACT` em `src/core/contracts.py`:
+    - PK composta: `("id_municipio", "fold_id")`.
+    - Colunas: `id_municipio` (String, 7 dígitos), `fold_id` (Int64, 0 a 4), `split_role` (String: `"train"`, `"test"`, `"buffer_exclusion"`), `ottobacia_id` (String), `perfil_amostral` (String).
+  - [x] Persistir em `data/staging/spatial_cv_folds.parquet` (`zstd`) e registrar no `manifest.json`.
+- **Verificação:** `uv run pytest -k "test_cross_validation"`
+- **Dependências:** 10.1.
+- **Arquivos impactados:** `src/spatial/cross_validation.py`, `src/core/contracts.py`.
+- **Escopo estimado:** M (2 arquivos).
+
+### Checkpoint de Paradigma 10
+- [x] Partição de 5-Fold Nested SBCV gerada por Ottobacias Nível 4.
+- [x] Dead-zone de 30 km computada e rotulada, com artefato `spatial_cv_folds.parquet` persistido e verificado por contrato.
+
+---
+
+## Fase 11: Stage 03D — Auditoria Científica, Orquestração e Qualidade Tripla
+
+### Tarefa 11.1: Suíte de Testes de Integridade Espacial, Estabilidade e Moran Residual (`tests/test_spatial_integrity.py`)
+- **Descrição:** Implementar testes automatizados de rigor epidemiológico e geoespacial em `tests/test_spatial_integrity.py`, cobrindo ausência de anomalias nas taxas suavizadas e comprovação de que a autocorrelação espacial (Moran's I) foi anulada pela dead-zone.
+- **Critérios de Aceite:**
+  - [x] **Teste 1 (Qualidade Numérica da SMR Suavizada):**
+    - Verificar ausência total de nulos, `NaN` ou infinitos em `smr_suavizada_eb`.
+    - Comprovar redução estatística de variância ($\sigma_{\text{EB}} < \sigma_{\text{bruta}}$) nos municípios de pequeno porte ($<10\text{k}$ hab.).
+    - Comprovar que o fator de encolhimento médio em capitais e metrópoles é superior ao de cidades pequenas.
+  - [x] **Teste 2 (Diagnóstico de Autocorrelação Residual via Moran's I):**
+    - Comprovar matematicamente que a aplicação da dead-zone de 30 km impõe distância mínima $\ge 30\text{ km}$ e elimina a autocorrelação de contiguidade imediata na fronteira entre teste e treino limpo.
+    - Demonstrar que o $I$ de Moran residual nos dados de teste sob matriz espacial $W$ controlada permanece baixo ($|I| < 0,45$).
+  - [x] **Teste 3 (Validação da Blocagem e Geometrias):**
+    - Verificar que 100% dos 5.570 municípios possuem coordenadas de sede válidas e pertencem a uma Ottobacia Nível 4.
+    - Confirmar que nenhuma bacia de teste é compartilhada com o treino efetivo em qualquer fold.
+- **Verificação:** `uv run pytest tests/test_spatial_integrity.py -v`
+- **Dependências:** Fase 8, Fase 9, Fase 10.
+- **Arquivos impactados:** `tests/test_spatial_integrity.py`.
+- **Escopo estimado:** M (1 arquivo).
+
+### Tarefa 11.2: Orquestrador Integrado do Stage 03 (`src/spatial/run_stage03.py`) e Rastreabilidade (`LineageTracker`)
+- **Descrição:** Desenvolver o script CLI principal que orquestra ponta-a-ponta a execução sequencial do Stage 03 (`geometries` $\to$ `ottobacias` $\to$ `empirical_bayes` $\to$ `cross_validation`), registrando hashes SHA-256 e metadados no `manifest.json`.
+- **Critérios de Aceite:**
+  - [x] Criar entrypoint CLI `src/spatial/run_stage03.py`.
+  - [x] Registrar cada artefato Parquet gerado (`spatial_municipios_ottobacias.parquet`, `sim_taxas_suavizadas_eb.parquet`, `spatial_cv_folds.parquet`) no `manifest.json` com seus respectivos hashes.
+  - [x] Gerar relatório sintético no console com métricas de tempo, número de bacias, redução de variância e contagem de folds.
+- **Verificação:** `uv run python -m src.spatial.run_stage03`
+- **Dependências:** 11.1.
+- **Arquivos impactados:** `src/spatial/run_stage03.py`.
+- **Escopo estimado:** S (1 arquivo).
+
+### Tarefa 11.3: Auditoria Tripla de Paradigma, Atualização do AST Graphify e Deploy Git
+- **Descrição:** Conduzir o checklist mandatório pré-commit (Ciência, Engenharia e Segurança), atualizar o grafo de conhecimento AST do repositório via `graphify`, criar commit atômico convencional e enviar ao GitHub remoto.
+- **Critérios de Aceite:**
+  - [x] **Ciência:** Verificação do checklist epidemiológico (SMR, $k=31$ sedes, Ottobacias Nível 4, dead-zone 30km).
+  - [x] **Engenharia:** Executar `uvx --from graphifyy graphify update .` (0 ciclos), `uv run ruff check src tests` (0 erros) e `uv run mypy src tests` (0 erros).
+  - [x] **Segurança:** Validar que nenhum `.parquet`, shapefile bruto ou segredo foi indexado no Git (`git status --ignored`).
+  - [x] **Testes:** 100% de sucesso na suíte de testes (`uv run pytest -v`).
+  - [x] **Deploy:** Commit convencional (`feat(stage03): spatial geometries, empirical bayes SMR smoothing and nested block CV with dead-zone`) e push para `origin/main`.
+- **Verificação:** `git log -n 1 --stat && git status`
+- **Dependências:** 11.2.
+- **Arquivos impactados:** Todo o repositório.
+- **Escopo estimado:** S.
+
+### Checkpoint de Paradigma 11
+- [x] Stage 03 completamente orquestrado, testado e auditado.
+- [x] Relatório final consolidado e autorização para avançar para o Stage 04 (Modelagem Preditiva e Benchmark TabFM).

@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "updated_at": "2026-10-30T19:16:14.120906+00:00",
+  "updated_at": "2026-10-30T23:51:16.448172+00:00",
   "artifacts": {
     "diretorio_municipios_full": {
       "artifact_name": "diretorio_municipios_full",
@@ -148,6 +148,95 @@
       "git_commit": "361fcbf7d8080d6583ddb2354f25d616a585524b",
       "git_branch": "main",
       "timestamp_utc": "2026-10-30T19:16:14.120826+00:00"
+    },
+    "spatial_municipios_ottobacias": {
+      "artifact_name": "spatial_municipios_ottobacias",
+      "relative_path": "data/staging/spatial_municipios_ottobacias.parquet",
+      "sha256": "3d7da1f10b53c66ae36704f094ecea5c6baa979cb3b7c0d65f2316b004a0acd8",
+      "size_bytes": 191189,
+      "num_rows": 5570,
+      "num_columns": 8,
+      "columns": [
+        "id_municipio",
+        "nome_municipio",
+        "sigla_uf",
+        "ottobacia_id",
+        "latitude_sede",
+        "longitude_sede",
+        "x_proj_5070",
+        "y_proj_5070"
+      ],
+      "sql_file": null,
+      "sql_sha256": null,
+      "domain_spec_sha256": "b1acee5f6c327b84e5e445aaa38f0183bd313115905c7b3195f158f9f31cd9fd",
+      "parameters": {
+        "stage": "03A",
+        "crs_proj": "EPSG:5070",
+        "ottobacias_level": 4,
+        "total_bacias_unicas": 834
+      },
+      "git_commit": "30636acc547ffba72f7f4ee53a93b922a1bd44d5",
+      "git_branch": "main",
+      "timestamp_utc": "2026-10-30T23:51:13.234925+00:00"
+    },
+    "sim_taxas_suavizadas_eb": {
+      "artifact_name": "sim_taxas_suavizadas_eb",
+      "relative_path": "data/staging/sim_taxas_suavizadas_eb.parquet",
+      "sha256": "9fd36ed7c791edf18d59e08fdcc0a55aa3eda031d6f93a3a5896f86a7f9fdf2b",
+      "size_bytes": 1748322,
+      "num_rows": 83550,
+      "num_columns": 8,
+      "columns": [
+        "id_municipio",
+        "ano",
+        "target_cancer",
+        "obitos_observados",
+        "obitos_esperados",
+        "smr_bruta",
+        "smr_suavizada_eb",
+        "peso_encolhimento_w"
+      ],
+      "sql_file": null,
+      "sql_sha256": null,
+      "domain_spec_sha256": "b1acee5f6c327b84e5e445aaa38f0183bd313115905c7b3195f158f9f31cd9fd",
+      "parameters": {
+        "stage": "03B",
+        "knn_k": 31,
+        "smoothing_method": "Spatial Linear Empirical Bayes",
+        "num_targets": 5,
+        "num_years": 3
+      },
+      "git_commit": "30636acc547ffba72f7f4ee53a93b922a1bd44d5",
+      "git_branch": "main",
+      "timestamp_utc": "2026-10-30T23:51:16.337982+00:00"
+    },
+    "spatial_cv_folds": {
+      "artifact_name": "spatial_cv_folds",
+      "relative_path": "data/staging/spatial_cv_folds.parquet",
+      "sha256": "8e11981bfa3f60c69aea47c8925dfc8ab197cb458122d1204dd18bfd82b1170a",
+      "size_bytes": 33231,
+      "num_rows": 3425,
+      "num_columns": 6,
+      "columns": [
+        "id_municipio",
+        "fold_id",
+        "split_role",
+        "ottobacia_id",
+        "perfil_amostral",
+        "dist_km_fronteira_teste"
+      ],
+      "sql_file": null,
+      "sql_sha256": null,
+      "domain_spec_sha256": "b1acee5f6c327b84e5e445aaa38f0183bd313115905c7b3195f158f9f31cd9fd",
+      "parameters": {
+        "stage": "03C",
+        "n_splits": 5,
+        "dead_zone_buffer_km": 30.0,
+        "total_records": 3425
+      },
+      "git_commit": "30636acc547ffba72f7f4ee53a93b922a1bd44d5",
+      "git_branch": "main",
+      "timestamp_utc": "2026-10-30T23:51:16.448080+00:00"
     }
   }
 }

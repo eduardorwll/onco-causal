@@ -176,3 +176,55 @@ SIM_MORTALIDADE_CONTRACT = DataContract(
         "obitos_totais": [-1],
     },
 )
+
+SPATIAL_GEOMETRIES_CONTRACT = DataContract(
+    name="spatial_municipios_ottobacias",
+    primary_keys=("id_municipio",),
+    required_schema={
+        "id_municipio": pl.String,
+        "nome_municipio": pl.String,
+        "sigla_uf": pl.String,
+        "ottobacia_id": pl.String,
+        "latitude_sede": pl.Float64,
+        "longitude_sede": pl.Float64,
+        "x_proj_5070": pl.Float64,
+        "y_proj_5070": pl.Float64,
+    },
+    sentinel_null_values={
+        "ottobacia_id": ["", "0", "9999", "None"],
+    },
+)
+
+SIM_TAXAS_SUAVIZADAS_EB_CONTRACT = DataContract(
+    name="sim_taxas_suavizadas_eb",
+    primary_keys=("id_municipio", "ano", "target_cancer"),
+    required_schema={
+        "id_municipio": pl.String,
+        "ano": pl.Int64,
+        "target_cancer": pl.String,
+        "obitos_observados": pl.Int64,
+        "obitos_esperados": pl.Float64,
+        "smr_bruta": pl.Float64,
+        "smr_suavizada_eb": pl.Float64,
+        "peso_encolhimento_w": pl.Float64,
+    },
+    sentinel_null_values={
+        "obitos_observados": [-1],
+    },
+)
+
+SPATIAL_CV_FOLDS_CONTRACT = DataContract(
+    name="spatial_cv_folds",
+    primary_keys=("id_municipio", "fold_id"),
+    required_schema={
+        "id_municipio": pl.String,
+        "fold_id": pl.Int64,
+        "split_role": pl.String,
+        "ottobacia_id": pl.String,
+        "perfil_amostral": pl.String,
+        "dist_km_fronteira_teste": pl.Float64,
+    },
+    sentinel_null_values={
+        "ottobacia_id": ["", "0", "9999", "None"],
+    },
+)

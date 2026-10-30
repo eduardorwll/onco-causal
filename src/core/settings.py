@@ -15,6 +15,13 @@ class BigQueryConfig(BaseModel):
     use_cache: bool
 
 
+class SpatialConfig(BaseModel):
+    crs_proj: str = "EPSG:5070"
+    knn_neighbors: int = 31
+    ottobacias_level: int = 4
+    dead_zone_buffer_km: float = 30.0
+
+
 class InternalControlsConfig(BaseModel):
     min_population: int = 50_000
     max_prop_linach_quantile: float = 0.25
@@ -57,6 +64,7 @@ class CnaeLinachGroup(BaseModel):
 
 class DomainSpec(BaseModel):
     bigquery: BigQueryConfig
+    spatial: SpatialConfig = Field(default_factory=SpatialConfig)
     sampling: SamplingConfig
     oncology_targets: dict[str, TargetSpec]
     cnae_linach_groups: dict[str, CnaeLinachGroup] = Field(default_factory=dict)

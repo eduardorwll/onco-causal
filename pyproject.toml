@@ -46,3 +46,9 @@ markers = [
     "integration: Testes ponta-a-ponta de engine e queries",
 ]
 
+[tool.mypy]
+python_version = "3.14"
+ignore_missing_imports = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+
