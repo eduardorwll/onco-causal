@@ -37,6 +37,7 @@ def df_recorte(env: EnvSettings) -> pl.DataFrame:
     return pl.read_parquet(path)
 
 
+@pytest.mark.data_contract
 class TestDiretorioMunicipiosFull:
     """Validações da Malha Nacional Integral (Nível I: N = 5.570 municípios)."""
 
@@ -85,6 +86,7 @@ class TestDiretorioMunicipiosFull:
             )
 
 
+@pytest.mark.data_contract
 class TestMunicipiosRecorteTabFM:
     """Validações do Recorte Analítico TabFM (Nível II: Capitais, Polos e >= 50k hab.)."""
 
@@ -137,6 +139,7 @@ class TestMunicipiosRecorteTabFM:
         assert enforced.height == df_recorte.height
 
 
+@pytest.mark.unit
 class TestDataContractRobustness:
     """Testes unitários de estresse e casos de borda do motor DataContract."""
 
@@ -188,6 +191,7 @@ class TestDataContractRobustness:
         assert clean_df["codigo"].to_list() == [10, None, None]
 
 
+@pytest.mark.unit
 class TestDomainSpecValidation:
     """Garante que a configuração declarativa respeita todas as regras dos Pilares e Metodologia."""
 
@@ -226,12 +230,14 @@ def _ibge_check_digit(code6: str) -> int:
 class TestIbgeCheckDigit:
     """Auditoria científica: integridade dos códigos IBGE (Sapezal-MT = 5107875, nunca 5107877)."""
 
+    @pytest.mark.unit
     def test_strategic_hubs_have_valid_check_digit(self, spec: DomainSpec):
         for hub_id in spec.sampling.all_hub_ids:
             assert _ibge_check_digit(hub_id[:6]) == int(hub_id[6]), (
                 f"DV inválido no polo {hub_id}"
             )
 
+    @pytest.mark.data_contract
     def test_sapezal_code_is_5107875(self, spec: DomainSpec, df_full: pl.DataFrame):
         assert "5107875" in spec.sampling.all_hub_ids
         assert "5107877" not in spec.sampling.all_hub_ids
@@ -239,6 +245,7 @@ class TestIbgeCheckDigit:
         assert row.height == 1 and row["nome_municipio"][0] == "Sapezal"
         assert df_full.filter(pl.col("id_municipio") == "5107877").height == 0
 
+    @pytest.mark.data_contract
     def test_full_mesh_check_digit_exceptions_are_rare(self, df_full: pl.DataFrame):
         """Poucos códigos oficiais do IBGE fogem à regra do DV; acima de 20 indica corrupção."""
         invalid = [

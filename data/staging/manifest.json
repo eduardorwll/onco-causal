@@ -1,0 +1,38 @@
+{
+  "version": "1.0",
+  "updated_at": "2026-10-30T18:56:53.554788+00:00",
+  "artifacts": {
+    "diretorio_municipios_full": {
+      "artifact_name": "diretorio_municipios_full",
+      "relative_path": "data/staging/diretorio_municipios_full.parquet",
+      "sha256": "ffdd736812e593fe0018d08fae3846a51913421cd881d55446bdaa6c5fc84517",
+      "size_bytes": 90226,
+      "num_rows": null,
+      "num_columns": null,
+      "columns": null,
+      "sql_file": "01_diretorio_amostra.sql",
+      "sql_sha256": "0fdcb0136927477b9e880a2e2561c292e4a115f5dfab2eda12a2c7b25b582d69",
+      "domain_spec_sha256": "4c6cc1e71a7fbba42c7c7449d2707dd32827037a6072b11dd69c2ced805f1b90",
+      "parameters": {},
+      "git_commit": "6cf1802a25d95af4361125c66589bc0f310f8e19",
+      "git_branch": "main",
+      "timestamp_utc": "2026-10-30T18:56:53.553166+00:00"
+    },
+    "municipios_recorte_tabfm": {
+      "artifact_name": "municipios_recorte_tabfm",
+      "relative_path": "data/staging/municipios_recorte_tabfm.parquet",
+      "sha256": "01194fe5f290dd262f23c8156a64661389561510628eb0c68e33b4f42a3bb828",
+      "size_bytes": 16646,
+      "num_rows": null,
+      "num_columns": null,
+      "columns": null,
+      "sql_file": "01_diretorio_amostra.sql",
+      "sql_sha256": "0fdcb0136927477b9e880a2e2561c292e4a115f5dfab2eda12a2c7b25b582d69",
+      "domain_spec_sha256": "4c6cc1e71a7fbba42c7c7449d2707dd32827037a6072b11dd69c2ced805f1b90",
+      "parameters": {},
+      "git_commit": "6cf1802a25d95af4361125c66589bc0f310f8e19",
+      "git_branch": "main",
+      "timestamp_utc": "2026-10-30T18:56:53.554744+00:00"
+    }
+  }
+}

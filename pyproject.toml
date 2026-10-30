@@ -24,19 +24,24 @@ dependencies = [
     "typer>=0.27.3",
 ]
 
-[project.scripts]
-onco-causal = "onco_causal:main"
-
-[build-system]
-requires = ["uv_build>=0.13.5,<0.14.0"]
-build-backend = "uv_build"
+[tool.uv]
+package = false
 
 [dependency-groups]
 dev = [
+    "mypy>=1.14.0",
     "pytest>=9.2.0",
+    "ruff>=0.9.0",
+    "types-pyyaml>=6.0.12.20261030",
 ]
+
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
+markers = [
+    "unit: Testes unitários com dados sintéticos em memória (sem IO de dados reais)",
+    "data_contract: Testes de integridade sobre artefatos Parquet reais em data/staging/",
+    "integration: Testes ponta-a-ponta de engine e queries",
+]
 

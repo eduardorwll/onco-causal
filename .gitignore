@@ -31,6 +31,7 @@ data/staging/*
 data/features/*
 !data/raw/.gitkeep
 !data/staging/.gitkeep
+!data/staging/manifest.json
 !data/features/.gitkeep
 *.parquet
 *.dbc

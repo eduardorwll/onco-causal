@@ -14,7 +14,7 @@ class DataContract:
 
     name: str
     primary_keys: tuple[str, ...]
-    required_schema: Mapping[str, pl.DataType]
+    required_schema: Mapping[str, pl.DataType | type[pl.DataType]]
     sentinel_null_values: Mapping[str, list[Any]] = field(default_factory=dict)
 
     def enforce(self, df: pl.DataFrame) -> pl.DataFrame:
@@ -40,7 +40,7 @@ class DataContract:
         for col, raw_vals in self.sentinel_null_values.items():
             if col in df.columns:
                 col_type = df.schema[col]
-                typed_vals = []
+                typed_vals: list[Any] = []
                 for v in raw_vals:
                     try:
                         if col_type in (pl.Int64, pl.Int32, pl.Int16, pl.Int8):

@@ -7,6 +7,7 @@ import polars as pl
 
 from src.core.bq_engine import BigQueryEngine
 from src.core.contracts import DataContract
+from src.core.lineage import LineageTracker
 from src.core.settings import DomainSpec, EnvSettings
 
 logger = logging.getLogger("onco_causal.ingest.municipios")
@@ -68,6 +69,31 @@ def run_municipios_stage(
     df_sample.write_parquet(sample_path, compression="zstd")
     logger.info(
         f"Artefato salvo: {sample_path} ({df_sample.height:,} municípios selecionados)"
+    )
+
+    # 4. Registro no Manifesto de Linhagem (Pilar III & Reprodutibilidade)
+    tracker = LineageTracker(manifest_path=env.staging_dir / "manifest.json")
+    tracker.record_artifact(
+        artifact_name="diretorio_municipios_full",
+        parquet_path=full_path,
+        df=df_valid,
+        sql_path=sql_file,
+        parameters={
+            "base_year_pop": spec.sampling.base_year_pop,
+            "min_populacao": spec.sampling.min_population,
+            "excluded_municipios": spec.sampling.excluded_municipios,
+        },
+    )
+    tracker.record_artifact(
+        artifact_name="municipios_recorte_tabfm",
+        parquet_path=sample_path,
+        df=df_sample,
+        sql_path=sql_file,
+        parameters={
+            "base_year_pop": spec.sampling.base_year_pop,
+            "min_populacao": spec.sampling.min_population,
+            "polos_estrategicos": spec.sampling.all_hub_ids,
+        },
     )
 
     logger.info(

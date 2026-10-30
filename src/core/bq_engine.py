@@ -81,9 +81,13 @@ class BigQueryEngine:
         )
 
     @staticmethod
-    def _build_bq_params(params: dict[str, Any]) -> list[Any]:
+    def _build_bq_params(
+        params: dict[str, Any],
+    ) -> list[bigquery.ArrayQueryParameter | bigquery.ScalarQueryParameter]:
         """Mapeia parâmetros Python nativos para QueryParameters do BigQuery."""
-        bq_params = []
+        bq_params: list[
+            bigquery.ArrayQueryParameter | bigquery.ScalarQueryParameter
+        ] = []
         for name, value in params.items():
             if isinstance(value, (list, tuple, set)):
                 bq_params.append(
