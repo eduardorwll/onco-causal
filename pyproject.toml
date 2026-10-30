@@ -1,10 +1,11 @@
 [project]
 name = "onco-causal"
 version = "0.1.0"
-description = "Add your description here"
+description = "Engenharia Preditiva e Inferência Causal na Epidemiologia Ambiental e Oncológica nos 5.570 Municípios Brasileiros"
 readme = "README.md"
+license = { text = "MIT" }
 authors = [
-    { name = "eduardorwll", email = "dudurewell@gmail.com" }
+    { name = "Eduardo Rewell", email = "dudurewell@gmail.com" }
 ]
 requires-python = ">=3.14"
 dependencies = [
