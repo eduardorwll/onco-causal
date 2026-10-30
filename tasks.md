@@ -1,6 +1,6 @@
 # tasks.md — Plano de Execução: Auditoria Científica, Engenharia, Segurança e Versionamento
 
-> **Status Global:** ✅ Fases 1–3 concluídas; Fase 4 em execução (Fase 0 concluída: skills localizadas/instaladas em ~/Sandbox/.agents/skills: planning-and-task-breakdown, scientific-critical-thinking, statistical-analysis, graphify, graft, security-audit)  
+> **Status Global:** ✅ Fases 1–3 concluídas; Fase 4 concluída (push em origin/main) (Fase 0 concluída: skills localizadas/instaladas em ~/Sandbox/.agents/skills: planning-and-task-breakdown, scientific-critical-thinking, statistical-analysis, graphify, graft, security-audit)  
 > **Escopo:** Consolidação do Stage 01, Auditoria Tripla (Ciência, Engenharia, Segurança), Blindagem Git e Preparação do Stage 02.
 
 ---
@@ -39,5 +39,5 @@
 - [x] **4.1.** Inicializar o repositório Git local (`git init -b main`), caso ainda não inicializado, e verificar `git status` para garantir que nenhum `.parquet` ou `.env` entrou no índice.
 - [x] **4.2.** Configurar o repositório remoto apontando para `git@github.com:eduardorwll/onco-causal.git` (validando se o remote `origin` já existe ou adicionando-o).
 - [x] **4.3.** Realizar o commit estruturado seguindo *Conventional Commits*: `feat(stage01): implement declarative core, BigQuery engine and municipality sampling`.
-- [ ] **4.4.** Testar conectividade SSH e realizar o push inicial (`git push -u origin main`).
+- [x] **4.4.** Testar conectividade SSH e realizar o push inicial (`git push -u origin main`).
 - [ ] **4.5. [ Checkpoint de Paradigma 4 ]:** Propor diretrizes de CI/CD e versionamento de dados científicos (DVC / metadados de linhagem) para os próximos estágios.
