@@ -1,5 +1,6 @@
 # `onco-causal` — Engenharia Preditiva e Inferência Causal na Epidemiologia Ambiental e Oncológica
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23820675.svg)](https://doi.org/10.5281/zenodo.23820675)
 [![Python Version](https://img.shields.io/badge/python-3.14%2B-blue.svg?logo=python&logoColor=white)](https://www.python.org/)
 [![Package Manager](https://img.shields.io/badge/managed%20by-uv-purple.svg?logo=astral&logoColor=white)](https://github.com/astral-sh/uv)
 [![Data Engine](https://img.shields.io/badge/engine-Polars%20%7C%20DuckDB%20%7C%20BigQuery-orange.svg)](https://pola.rs/)
@@ -332,8 +333,9 @@ Se este repositório, metodologia ou pipeline for utilizado em sua pesquisa ou p
   author = {Rewell, Eduardo},
   title = {onco-causal: Predictive Engineering and Causal Inference in Environmental and Oncological Epidemiology},
   year = {2026},
-  publisher = {GitHub},
-  journal = {GitHub repository},
+  publisher = {Zenodo},
+  doi = {10.5281/zenodo.23820675},
+  url = {https://doi.org/10.5281/zenodo.23820675},
   howpublished = {\url{https://github.com/eduardorwll/onco-causal}},
   note = {Pre-registration tag: v0.1.0-preregistration}
 }
