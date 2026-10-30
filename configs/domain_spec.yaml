@@ -1,0 +1,142 @@
+# configs/domain_spec.yaml
+# Especificação Declarativa de Domínio - onco-causal
+
+bigquery:
+  max_bytes_billed: 1073741824  # Trava estrita de 1 GB por query (Pilar II)
+  use_cache: true
+
+sampling:
+  min_population: 50000
+  base_year_pop: 2020
+  # 5101837: Boa Esperança do Norte - MT (criado pós-2024, ausente na malha histórica 1985-2024 de 5.570 municípios)
+  excluded_municipios:
+    - "5101837"
+  strategic_hubs:
+    agro_intensivo:
+      - "5107875"  # Sapezal - MT
+      - "5102637"  # Campo Novo do Parecis - MT
+      - "5102686"  # Campos de Júlio - MT
+      - "5105259"  # Lucas do Rio Verde - MT
+      - "5107925"  # Sorriso - MT
+      - "2903201"  # Barreiras - BA
+      - "2919553"  # Luís Eduardo Magalhães - BA
+    petroquimico_industrial:
+      - "4322004"  # Triunfo - RS
+      - "3513504"  # Cubatão - SP
+      - "2905701"  # Camaçari - BA
+      - "3306305"  # Volta Redonda - RJ
+      - "3536505"  # Paulínia - SP
+      - "3131307"  # Ipatinga - MG
+
+oncology_targets:
+  hematologico_infantojuvenil:
+    name: "Neoplasias Hematológicas e Infantojuvenis"
+    cid10_prefixes:
+      - "C81"
+      - "C82"
+      - "C83"
+      - "C84"
+      - "C85"
+      - "C86"
+      - "C88"
+      - "C90"
+      - "C91"
+      - "C92"
+      - "C93"
+      - "C94"
+      - "C95"
+      - "C96"
+    lag_window_years: [2, 5]
+    description: "Benzeno, solventes, agrotóxicos organofosforados, herbicidas e deriva aérea"
+
+  respiratorio:
+    name: "Trato Respiratório e Intratorácico"
+    cid10_prefixes:
+      - "C34"
+    lag_window_years: [10, 25]
+    description: "Material particulado PM2.5/PM10, queima fóssil/biomassa, termelétricas, sílica, asbesto"
+
+  digestivo:
+    name: "Trato Digestivo e Órgãos Anexos"
+    cid10_prefixes:
+      - "C15"
+      - "C16"
+      - "C17"
+      - "C18"
+      - "C19"
+      - "C20"
+      - "C21"
+      - "C22"
+      - "C23"
+      - "C24"
+      - "C25"
+      - "C26"
+    lag_window_years: [10, 20]
+    description: "Contaminantes químicos na água (SISAGUA, trihalometanos, agrotóxicos, metais pesados)"
+
+  pele_melanoma:
+    name: "Pele e Melanoma"
+    cid10_prefixes:
+      - "C43"
+      - "C44"
+    lag_window_years: [10, 20]
+    description: "Irradiação solar global e Índice UV extremo (LABREN), trabalho rural a céu aberto"
+
+  hormoniodependente_urogenital:
+    name: "Tumores Hormoniodependentes e Urogenitais"
+    cid10_prefixes:
+      - "C50"
+      - "C53"
+      - "C61"
+      - "C67"
+      - "C73"
+    lag_window_years: [10, 25]
+    description: "Agrotóxicos disruptores endócrinos, aminas aromáticas, poluição atmosférica urbana"
+
+cnae_linach_groups:
+  benzeno_petroquimica:
+    name: "Benzeno e Derivados (Petroquímica e Combustíveis)"
+    cnae_prefixes:
+      - "192"
+      - "201"
+      - "202"
+      - "4681"
+      - "4731"
+
+  agrotoxicos_quimicos:
+    name: "Fabricação e Formulação de Defensivos Agrícolas"
+    cnae_prefixes:
+      - "2051"
+      - "2052"
+      - "4683"
+
+  asbesto_amianto_fibrocimento:
+    name: "Asbesto e Minerais Carcinogênicos"
+    cnae_prefixes:
+      - "0891"
+      - "2391"
+      - "2399"
+
+  silica_mineracao_construcao:
+    name: "Sílica Cristalina (Extração Mineral, Cerâmica e Vidro)"
+    cnae_prefixes:
+      - "0810"
+      - "231"
+      - "234"
+      - "412"
+
+  siderurgia_fumos_metalicos:
+    name: "Siderurgia, Fundição e Metalurgia Pesada"
+    cnae_prefixes:
+      - "241"
+      - "242"
+      - "243"
+      - "244"
+      - "253"
+
+  emissao_diesel_transporte:
+    name: "Transporte Rodoviário Pesado e Motores Diesel"
+    cnae_prefixes:
+      - "4921"
+      - "4922"
+      - "4930"

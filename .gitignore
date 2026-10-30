@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+.venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Segredos e credenciais (NUNCA versionar)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*credentials*.json
+*service-account*.json
+*service_account*.json
+application_default_credentials.json
+.gcloud/
+.config/gcloud/
+
+# Camadas Medallion: apenas a estrutura (.gitkeep) é versionada, nunca os dados
+data/raw/*
+data/staging/*
+data/features/*
+!data/raw/.gitkeep
+!data/staging/.gitkeep
+!data/features/.gitkeep
+*.parquet
+*.dbc
+*.dbf
+*.shp
+*.shx
+*.gpkg
+*.feather
+*.duckdb
+
+# Artefatos locais de agentes/ferramentas
+graphify-out/
+.antigravity/
+GEMINI.md
+CLAUDE.md
+.claude/
+.cursor/
+.DS_Store

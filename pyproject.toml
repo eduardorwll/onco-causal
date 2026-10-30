@@ -1,0 +1,42 @@
+[project]
+name = "onco-causal"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "eduardorwll", email = "dudurewell@gmail.com" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "duckdb>=2.0.0",
+    "esda>=2.10.0",
+    "geopandas>=1.2.0",
+    "google-cloud-bigquery>=3.47.0",
+    "google-cloud-bigquery-storage>=2.43.0",
+    "httpx>=0.28.1",
+    "libpysal>=4.15.1",
+    "polars>=2.1.0",
+    "pyarrow>=26.0.0",
+    "pydantic>=2.14.2",
+    "pydantic-settings>=2.16.2",
+    "pyyaml>=6.0.3",
+    "tenacity>=9.2.1",
+    "typer>=0.27.3",
+]
+
+[project.scripts]
+onco-causal = "onco_causal:main"
+
+[build-system]
+requires = ["uv_build>=0.13.5,<0.14.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.2.0",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+
