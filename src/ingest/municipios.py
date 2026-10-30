@@ -33,6 +33,74 @@ MUNICIPIOS_CONTRACT = DataContract(
 )
 
 
+def apply_internal_controls(
+    df: pl.DataFrame,
+    env: EnvSettings,
+    spec: DomainSpec,
+) -> pl.DataFrame:
+    """Classifica o Estrato 4 ('4_Controle_Interno') cruzando RAIS e PAM se disponíveis."""
+    rais_p = env.staging_dir / "rais_linach_anual.parquet"
+    pam_p = env.staging_dir / "pam_lavouras_anual.parquet"
+
+    if not (rais_p.exists() and pam_p.exists()):
+        return df
+
+    rais_df = pl.read_parquet(rais_p)
+    pam_df = pl.read_parquet(pam_p)
+
+    r_avg = rais_df.group_by("id_municipio").agg(
+        pl.col("prop_linach").mean().alias("prop_linach_mean")
+    )
+    p_avg = pam_df.group_by("id_municipio").agg(
+        pl.col("area_total_lavouras_criticas_ha").mean().alias("area_agro_mean")
+    )
+
+    enriched = (
+        df.join(r_avg, on="id_municipio", how="left")
+        .join(p_avg, on="id_municipio", how="left")
+        .fill_null(0.0)
+    )
+    enriched = enriched.with_columns(
+        (pl.col("area_agro_mean") / pl.col("populacao_estimada")).alias(
+            "agro_ha_pc"
+        )
+    )
+
+    candidatos = enriched.filter(pl.col("perfil_amostral") == "3_Acima_50k")
+    if candidatos.is_empty():
+        return df
+
+    q_linach = candidatos["prop_linach_mean"].quantile(
+        spec.sampling.internal_controls.max_prop_linach_quantile
+    )
+    q_agro = candidatos["agro_ha_pc"].quantile(
+        spec.sampling.internal_controls.max_agro_ha_pc_quantile
+    )
+
+    if q_linach is None or q_agro is None:
+        return df
+
+    ctrl_ids = set(
+        enriched.filter(
+            (pl.col("perfil_amostral") == "3_Acima_50k")
+            & (pl.col("prop_linach_mean") <= q_linach)
+            & (pl.col("agro_ha_pc") <= q_agro)
+        )["id_municipio"].to_list()
+    )
+
+    logger.info(
+        f"Estrato 4 ('4_Controle_Interno') materializado: {len(ctrl_ids)} municípios "
+        f"[Q25 LINACH: {q_linach:.4f} | Q25 Agro ha/hab: {q_agro:.4f}]"
+    )
+
+    return df.with_columns(
+        pl.when(pl.col("id_municipio").is_in(list(ctrl_ids)))
+        .then(pl.lit("4_Controle_Interno"))
+        .otherwise(pl.col("perfil_amostral"))
+        .alias("perfil_amostral")
+    )
+
+
 def run_municipios_stage(
     env: EnvSettings,
     spec: DomainSpec,
@@ -56,6 +124,8 @@ def run_municipios_stage(
 
     # 1. Validação estrita por contrato (Pilar III)
     df_valid = MUNICIPIOS_CONTRACT.enforce(df_raw)
+    df_valid = apply_internal_controls(df_valid, env, spec)
+    df_valid = MUNICIPIOS_CONTRACT.enforce(df_valid)
 
     # 2. Persistência da malha completa (Nível I: N = 5.570 para Spatial Empirical Bayes)
     full_path = env.staging_dir / "diretorio_municipios_full.parquet"

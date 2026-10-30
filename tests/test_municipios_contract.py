@@ -91,11 +91,18 @@ class TestMunicipiosRecorteTabFM:
     """Validações do Recorte Analítico TabFM (Nível II: Capitais, Polos e >= 50k hab.)."""
 
     def test_recorte_isolates_strata_strictly(self, df_recorte: pl.DataFrame):
-        """Garante que apenas os estratos 1_Capital, 2_Polo_Estrategico e 3_Acima_50k estão presentes."""
+        """Garante que apenas os estratos válidos de modelagem estão presentes."""
         perfil_vals = set(df_recorte["perfil_amostral"].unique().to_list())
-        expected_strata = {"1_Capital", "2_Polo_Estrategico", "3_Acima_50k"}
-        assert perfil_vals == expected_strata, (
-            f"Estratos divergentes: {perfil_vals} != {expected_strata}"
+        # Suporta tanto o estágio inicial (3 estratos) quanto o enriquecido com Estrato 4
+        expected_3 = {"1_Capital", "2_Polo_Estrategico", "3_Acima_50k"}
+        expected_4 = {
+            "1_Capital",
+            "2_Polo_Estrategico",
+            "3_Acima_50k",
+            "4_Controle_Interno",
+        }
+        assert perfil_vals in (expected_3, expected_4), (
+            f"Estratos divergentes: {perfil_vals} não é {expected_3} nem {expected_4}"
         )
         assert "4_Pequeno_Porte" not in perfil_vals, (
             "Recorte TabFM não deve conter municípios de pequeno porte."
@@ -130,6 +137,27 @@ class TestMunicipiosRecorteTabFM:
             f"{below_min.height} municípios no estrato 3_Acima_50k possuem população "
             f"abaixo do piso de {spec.sampling.min_population} hab."
         )
+
+    def test_recorte_estrato_4_internal_controls(
+        self, df_recorte: pl.DataFrame, spec: DomainSpec
+    ):
+        """Valida que municípios em 4_Controle_Interno respeitam o piso demográfico de 50k."""
+        ctrls = df_recorte.filter(
+            pl.col("perfil_amostral") == "4_Controle_Interno"
+        )
+        if ctrls.height > 0:
+            below_min = ctrls.filter(
+                pl.col("populacao_estimada")
+                < spec.sampling.internal_controls.min_population
+            )
+            assert below_min.height == 0, (
+                f"{below_min.height} controles internos abaixo de {spec.sampling.internal_controls.min_population} hab."
+            )
+            # Não pode conter polos estratégicos
+            for hub in spec.sampling.all_hub_ids:
+                assert (
+                    ctrls.filter(pl.col("id_municipio") == hub).height == 0
+                ), f"Polo {hub} marcado como controle interno."
 
     def test_recorte_pk_integrity_and_contract(self, df_recorte: pl.DataFrame):
         """Valida que o recorte analítico passa integralmente no DataContract."""

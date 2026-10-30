@@ -3,8 +3,10 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+
 import polars as pl
 import pytest
+
 from src.core.lineage import LineageTracker, compute_file_sha256
 
 

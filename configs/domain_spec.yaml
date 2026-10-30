@@ -11,6 +11,10 @@ sampling:
   # 5101837: Boa Esperança do Norte - MT (criado pós-2024, ausente na malha histórica 1985-2024 de 5.570 municípios)
   excluded_municipios:
     - "5101837"
+  internal_controls:
+    min_population: 50000
+    max_prop_linach_quantile: 0.25
+    max_agro_ha_pc_quantile: 0.25
   strategic_hubs:
     agro_intensivo:
       - "5107875"  # Sapezal - MT

@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "updated_at": "2026-10-30T18:56:53.554788+00:00",
+  "updated_at": "2026-10-30T19:16:14.120906+00:00",
   "artifacts": {
     "diretorio_municipios_full": {
       "artifact_name": "diretorio_municipios_full",
@@ -33,6 +33,121 @@
       "git_commit": "6cf1802a25d95af4361125c66589bc0f310f8e19",
       "git_branch": "main",
       "timestamp_utc": "2026-10-30T18:56:53.554744+00:00"
+    },
+    "rais_linach_anual": {
+      "artifact_name": "rais_linach_anual",
+      "relative_path": "data/staging/rais_linach_anual.parquet",
+      "sha256": "8cd383eea9c6c3cdfd6a8aac0f8e314813657bed44bccef5ada134da967cec5a",
+      "size_bytes": 156695,
+      "num_rows": 11140,
+      "num_columns": 5,
+      "columns": [
+        "id_municipio",
+        "ano",
+        "vinculos_totais",
+        "vinculos_linach",
+        "prop_linach"
+      ],
+      "sql_file": "02_rais_exposicao_linach.sql",
+      "sql_sha256": "f8f7794a75270546ae3233a9b00fee5a8abad5ae41e3a98b691f7c340962c8f7",
+      "domain_spec_sha256": "4c6cc1e71a7fbba42c7c7449d2707dd32827037a6072b11dd69c2ced805f1b90",
+      "parameters": {
+        "ano_inicio": 2021,
+        "ano_fim": 2022,
+        "batch_size": 2
+      },
+      "git_commit": "361fcbf7d8080d6583ddb2354f25d616a585524b",
+      "git_branch": "main",
+      "timestamp_utc": "2026-10-30T19:07:10.335153+00:00"
+    },
+    "pam_lavouras_anual": {
+      "artifact_name": "pam_lavouras_anual",
+      "relative_path": "data/staging/pam_lavouras_anual.parquet",
+      "sha256": "06ca668ab971e28e2786ceea55ddaa18d8350da1deb58078ab8b4d61e3c95ab2",
+      "size_bytes": 175427,
+      "num_rows": 16689,
+      "num_columns": 9,
+      "columns": [
+        "id_municipio",
+        "ano",
+        "area_soja_ha",
+        "area_milho_ha",
+        "area_algodao_ha",
+        "area_cana_ha",
+        "area_arroz_ha",
+        "area_citros_ha",
+        "area_total_lavouras_criticas_ha"
+      ],
+      "sql_file": "03_pam_lavouras.sql",
+      "sql_sha256": "4abef3e1adaa189426610a4275aaf1962c623026f8c9a1fb722a81f1aa65212d",
+      "domain_spec_sha256": "4c6cc1e71a7fbba42c7c7449d2707dd32827037a6072b11dd69c2ced805f1b90",
+      "parameters": {
+        "ano_inicio": 2020,
+        "ano_fim": 2022
+      },
+      "git_commit": "361fcbf7d8080d6583ddb2354f25d616a585524b",
+      "git_branch": "main",
+      "timestamp_utc": "2026-10-30T19:08:00.194860+00:00"
+    },
+    "controles_assistenciais_snis": {
+      "artifact_name": "controles_assistenciais_snis",
+      "relative_path": "data/staging/controles_assistenciais_snis.parquet",
+      "sha256": "6a9d2570fdb70a09d9a6675d8e899c57f259f25276d3efdda27c7cbe1f56f103",
+      "size_bytes": 59216,
+      "num_rows": 5570,
+      "num_columns": 9,
+      "columns": [
+        "id_municipio",
+        "ano",
+        "unacon_cacon_ativos",
+        "leitos_totais",
+        "tomografos_ativos",
+        "mamografos_ativos",
+        "indice_atendimento_total_agua",
+        "indice_coleta_esgoto",
+        "indice_tratamento_esgoto"
+      ],
+      "sql_file": "04_cnes_snis_controles.sql",
+      "sql_sha256": "98a1bae9391574e2f78388bd0cf23606fc2b13fe61a3a61b72cfb90eb9539518",
+      "domain_spec_sha256": "4c6cc1e71a7fbba42c7c7449d2707dd32827037a6072b11dd69c2ced805f1b90",
+      "parameters": {
+        "ano_inicio": 2020,
+        "ano_fim": 2020
+      },
+      "git_commit": "361fcbf7d8080d6583ddb2354f25d616a585524b",
+      "git_branch": "main",
+      "timestamp_utc": "2026-10-30T19:09:41.969667+00:00"
+    },
+    "sim_taxas_padronizadas_5570": {
+      "artifact_name": "sim_taxas_padronizadas_5570",
+      "relative_path": "data/staging/sim_taxas_padronizadas_5570.parquet",
+      "sha256": "98c5c83ef1cdd53a48da43d0cc48ff754d1a161f62d3ac395d9496dab162a9a7",
+      "size_bytes": 956782,
+      "num_rows": 83550,
+      "num_columns": 8,
+      "columns": [
+        "id_municipio",
+        "ano",
+        "target_cancer",
+        "obitos_totais",
+        "populacao_total",
+        "asr_omsworld_100k",
+        "obitos_esperados_smr",
+        "smr_razao"
+      ],
+      "sql_file": "05_sim_mortalidade_padronizada.sql",
+      "sql_sha256": "537cc31457256009ad6f3507d21d39737d57ec1baa52c93787014f3027e548bd",
+      "domain_spec_sha256": "bf7f185602a964bdb7b56779d03ab43be124993edeeb3c81b352e5febd93a28e",
+      "parameters": {
+        "anos": [
+          2020,
+          2021,
+          2022
+        ]
+      },
+      "git_commit": "361fcbf7d8080d6583ddb2354f25d616a585524b",
+      "git_branch": "main",
+      "timestamp_utc": "2026-10-30T19:16:14.120826+00:00"
     }
   }
 }

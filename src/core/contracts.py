@@ -99,3 +99,80 @@ class DataContract:
             )
 
         return df
+
+
+# --- Contratos Declarativos Oficiais do Pipeline (Pilares III & IV) ---
+
+RAIS_LINACH_CONTRACT = DataContract(
+    name="rais_linach_anual",
+    primary_keys=("id_municipio", "ano"),
+    required_schema={
+        "id_municipio": pl.String,
+        "ano": pl.Int64,
+        "vinculos_totais": pl.Int64,
+        "vinculos_linach": pl.Int64,
+        "prop_linach": pl.Float64,
+    },
+    sentinel_null_values={
+        "vinculos_totais": [-1, 999999],
+        "vinculos_linach": [-1, 999999],
+    },
+)
+
+PAM_LAVOURAS_CONTRACT = DataContract(
+    name="pam_lavouras_anual",
+    primary_keys=("id_municipio", "ano"),
+    required_schema={
+        "id_municipio": pl.String,
+        "ano": pl.Int64,
+        "area_soja_ha": pl.Float64,
+        "area_milho_ha": pl.Float64,
+        "area_algodao_ha": pl.Float64,
+        "area_cana_ha": pl.Float64,
+        "area_arroz_ha": pl.Float64,
+        "area_citros_ha": pl.Float64,
+        "area_total_lavouras_criticas_ha": pl.Float64,
+    },
+    sentinel_null_values={
+        "area_total_lavouras_criticas_ha": [-1.0, 999999.0],
+    },
+)
+
+CONTROLES_ASSISTENCIAIS_CONTRACT = DataContract(
+    name="controles_assistenciais_snis",
+    primary_keys=("id_municipio", "ano"),
+    required_schema={
+        "id_municipio": pl.String,
+        "ano": pl.Int64,
+        "unacon_cacon_ativos": pl.Int64,
+        "leitos_totais": pl.Int64,
+        "tomografos_ativos": pl.Int64,
+        "mamografos_ativos": pl.Int64,
+        "indice_atendimento_total_agua": pl.Float64,
+        "indice_coleta_esgoto": pl.Float64,
+        "indice_tratamento_esgoto": pl.Float64,
+    },
+    sentinel_null_values={
+        "indice_atendimento_total_agua": [-1.0, 999.0, 9999.0],
+        "indice_coleta_esgoto": [-1.0, 999.0, 9999.0],
+        "indice_tratamento_esgoto": [-1.0, 999.0, 9999.0],
+    },
+)
+
+SIM_MORTALIDADE_CONTRACT = DataContract(
+    name="sim_taxas_padronizadas",
+    primary_keys=("id_municipio", "ano", "target_cancer"),
+    required_schema={
+        "id_municipio": pl.String,
+        "ano": pl.Int64,
+        "target_cancer": pl.String,
+        "obitos_totais": pl.Int64,
+        "populacao_total": pl.Int64,
+        "asr_omsworld_100k": pl.Float64,
+        "obitos_esperados_smr": pl.Float64,
+        "smr_razao": pl.Float64,
+    },
+    sentinel_null_values={
+        "obitos_totais": [-1],
+    },
+)

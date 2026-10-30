@@ -1,14 +1,16 @@
 # src/core/lineage.py
 from __future__ import annotations
 
-from datetime import datetime, timezone
 import hashlib
 import json
 import logging
-from pathlib import Path
 import subprocess
+from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
+
 import polars as pl
+
 from src.core.settings import PROJECT_ROOT
 
 logger = logging.getLogger("onco_causal.core.lineage")
@@ -34,7 +36,7 @@ def get_git_metadata() -> dict[str, str]:
             stderr=subprocess.DEVNULL,
             text=True,
         ).strip()
-    except Exception:
+    except (subprocess.SubprocessError, OSError):
         commit = "unknown"
 
     try:
@@ -44,7 +46,7 @@ def get_git_metadata() -> dict[str, str]:
             stderr=subprocess.DEVNULL,
             text=True,
         ).strip()
-    except Exception:
+    except (subprocess.SubprocessError, OSError):
         branch = "unknown"
 
     return {"commit": commit, "branch": branch}
@@ -66,13 +68,13 @@ class LineageTracker:
                     data = json.load(f)
                     if isinstance(data, dict):
                         return data
-            except Exception as err:
+            except (json.JSONDecodeError, OSError) as err:
                 logger.warning(
                     f"Falha ao carregar manifesto existente em {self.manifest_path}: {err}. Reiniciando."
                 )
         return {
             "version": "1.0",
-            "updated_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(UTC).isoformat(),
             "artifacts": {},
         }
 
@@ -119,11 +121,11 @@ class LineageTracker:
             "parameters": parameters or {},
             "git_commit": git_meta["commit"],
             "git_branch": git_meta["branch"],
-            "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+            "timestamp_utc": datetime.now(UTC).isoformat(),
         }
 
         manifest = self.load_manifest()
-        manifest["updated_at"] = datetime.now(timezone.utc).isoformat()
+        manifest["updated_at"] = datetime.now(UTC).isoformat()
         if "artifacts" not in manifest or not isinstance(manifest["artifacts"], dict):
             manifest["artifacts"] = {}
         manifest["artifacts"][artifact_name] = entry

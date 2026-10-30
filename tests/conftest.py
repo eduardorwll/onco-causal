@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import polars as pl
 import pytest
+
 from src.core.settings import DomainSpec, EnvSettings
 
 

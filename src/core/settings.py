@@ -15,11 +15,20 @@ class BigQueryConfig(BaseModel):
     use_cache: bool
 
 
+class InternalControlsConfig(BaseModel):
+    min_population: int = 50_000
+    max_prop_linach_quantile: float = 0.25
+    max_agro_ha_pc_quantile: float = 0.25
+
+
 class SamplingConfig(BaseModel):
     min_population: int = Field(ge=0)
     base_year_pop: int = Field(ge=1996)
     excluded_municipios: list[str] = Field(default_factory=list)
     strategic_hubs: dict[str, list[str]] = Field(default_factory=dict)
+    internal_controls: InternalControlsConfig = Field(
+        default_factory=InternalControlsConfig
+    )
 
     @property
     def all_hub_ids(self) -> list[str]:
