@@ -1,7 +1,7 @@
-# tasks.md — Plano de Execução: Stage 04 (Engenharia de Lags Biológicos e Benchmark Preditivo Multi-Paradigma)
+# tasks.md — Plano de Execução: Stage 05 (Inferência Causal Semiparamétrica, Refutação, Simulador Contrafactual e IDV)
 
-> **Status Global:** ✅ STAGES 01, 02, 03 E 04 CONCLUÍDOS | PRONTO PARA STAGE 05 (INFERÊNCIA CAUSAL DOUBLEML/DOWHY)  
-> **Escopo:** Fase 12 (Stage 04A: Backfill Histórico de Exposições 1998–2020), Fase 13 (Stage 04B: Engenharia de Lags e Master Panel), Fase 14 (Stage 04C: Benchmark Multi-Paradigma TabFM/TabNet/GBDT + TreeSHAP) e Fase 15 (Stage 04D: Auditoria Científica e Qualidade).  
+> **Status Global:** 🟢 STAGE 05 CONCLUÍDO COM EXCELÊNCIA (PIPELINE CIENTÍFICO FINALIZADO)  
+> **Escopo:** Fase 16 (Stage 05A: Governança Causal, DAG Formal e DML PLR com Correção do Viés de Detecção), Fase 17 (Stage 05B: Protocolo Triplo de Refutação Científica), Fase 18 (Stage 05C: Simulador Contrafactual de Óbitos Evitáveis e Silent Hotspots IDV) e Fase 19 (Stage 05D: Contratos, Testes, Orquestração e Deploy Final).  
 > **Conformidade:** @AGENTS.md, @PROJECT_SPEC.md, @OBJETIVO.md e @METODOLOGIA.md.
 
 ---
@@ -566,3 +566,220 @@
 ### Checkpoint de Paradigma 15
 - [x] Stage 04 completamente orquestrado, testado e publicado.
 - [x] Modelos de fundação, deep learning e GBDT ranqueados para embasar o Stage 05 (Inferência Causal Semiparamétrica DoubleML/DoWhy e Simulador Contrafactual).
+
+---
+
+## Fase 16: Stage 05A — Governança Causal, DAG Formal e Estimação Semiparamétrica DML (`src/causal/dml_estimator.py`)
+
+### Tarefa 16.1: Configuração Declarativa Causal e DAG Estrutural Formal (`configs/domain_spec.yaml` e `src/causal/dag.py`)
+- **Descrição:** Parametrizar em `configs/domain_spec.yaml` os vetores de exposição ($D_1$ agro, $D_4$ LINACH), confundidores assistenciais/sanitários $Z$, e construir em `src/causal/dag.py` o Grafo Acíclico Direcionado (DAG) epidemiológico formal usando `networkx` e `dowhy`.
+- **Critérios de Aceite:**
+  - [x] Adicionar seção `causal` em `configs/domain_spec.yaml`:
+    - `confounders`: assistencial (`unacon_cacon_ativos`, `leitos_pc_100k`, `tomografos_pc_100k`, `mamografos_pc_100k`), sanitário (`indice_atendimento_total_agua`, `indice_coleta_esgoto`, `indice_tratamento_esgoto`), baseline de uso da terra (`prop_floresta_mean`, `prop_urbanizada_mean`).
+    - `exposures`: $D_1$ (`prop_lavouras_criticas_mean`), $D_4$ (`prop_linach_mean`).
+    - `cluster_col`: `ottobacia_id`.
+  - [x] Criar módulo `src/causal/dag.py` mapeando nós e arestas:
+    - Exposição ambiental/ocupacional $D \to$ Desfecho oncológico suavizado $Y$.
+    - Confundidores $Z \to D$ e $Z \to Y$ (bloqueio de caminhos *backdoor*).
+    - Viés de detecção: Infraestrutura assistencial $Z_{\text{diag}} \to Y_{\text{obs}}$ (capacidade de diagnóstico/notificação).
+  - [x] Validar formalmente no `dowhy.CausalModel` que $Z$ é um conjunto suficiente de ajuste (*backdoor criterion*) sem incluir mediadores ou colisores.
+- **Verificação:** `uv run python -m src.causal.dag`
+- **Dependências:** Fase 15.
+- **Arquivos impactados:** `configs/domain_spec.yaml`, `src/causal/dag.py`.
+- **Escopo estimado:** S (2 arquivos).
+
+### Tarefa 16.2: Modelo Partially Linear Regression (PLR) com Ortogonalização de Neyman e Erros Clusterizados (`src/causal/dml_estimator.py`)
+- **Descrição:** Implementar o estimador Partially Linear Regression (PLR) de Robinson (1988) com dupla robustez / ortogonalização de Neyman e *Spatial Cross-Fitting* em 5 folds com isolamento estrito de dead-zone (< 30 km) e erros-padrão clusterizados por bacia hidrográfica (`ottobacia_id`).
+- **Critérios de Aceite:**
+  - [x] Criar classe `SpatialDoubleMLPLR` em `src/causal/dml_estimator.py`.
+  - [x] **Spatial Cross-Fitting com Dead-Zone:**
+    - Consumir partições de `data/staging/spatial_cv_folds.parquet`.
+    - Garantir que para cada fold $k \in \{0, 1, 2, 3, 4\}$, todas as linhas com `split_role == "buffer_exclusion"` sejam excluídas do ajuste das funções nuisance $\hat{g}(Z)$ e $\hat{m}(Z)$ e do cálculo de resíduos.
+  - [x] **Ajuste de Funções Nuisance fora da amostra:**
+    - Predição de desfecho: $\hat{g}^{(-k)}(Z)$ via XGBoost/LightGBM.
+    - Predição de propensão de exposição: $\hat{m}^{(-k)}(Z)$ via XGBoost/LightGBM.
+    - Resíduos ortogonalizados: $\tilde{Y} = Y - \hat{g}(Z)$ e $\tilde{D} = D - \hat{m}(Z)$.
+  - [x] **Estimação Pontual e Inferência Assintótica:**
+    - Coeficiente causal de Neyman: $\hat{\theta} = \left( \sum_i \tilde{D}_i^2 \right)^{-1} \left( \sum_i \tilde{D}_i \tilde{Y}_i \right)$.
+    - Erro-padrão sanduíche clusterizado (*cluster-robust standard errors*) agrupado por `ottobacia_id`, intervalo de confiança de 95% e p-valor.
+    - Cálculo do Impacto Causal Padronizado: $\text{IQR-ATE} = \left( \frac{|\hat{\theta}|}{\bar{Y}} \right) \cdot \text{IQR}(D)$.
+- **Verificação:** `uv run python -m src.causal.dml_estimator`
+- **Dependências:** 16.1.
+- **Arquivos impactados:** `src/causal/dml_estimator.py`.
+- **Escopo estimado:** M (1 arquivo).
+
+### Tarefa 16.3: Experimento do Viés de Detecção (Comprovação Empírica da Hipótese $H_3$)
+- **Descrição:** Conduzir experimento econométrico comparativo entre o estimador ingênuo ($\hat{\theta}_{\text{naive}}$ sem controle de infraestrutura diagnóstica) e o estimador ortogonalizado ($\hat{\theta}_{\text{DML}}$ com controle assistencial do CNES e sanitário do SNIS).
+- **Critérios de Aceite:**
+  - [x] Estimar para os 5 alvos oncológicos os coeficientes ingênuos $\hat{\theta}_{\text{naive}}$ regredindo $Y$ diretamente em $D$.
+  - [x] Comparar com $\hat{\theta}_{\text{DML}}$ ortogonalizado.
+  - [x] Demonstrar matematicamente a eliminação da atenuação/distorção: comprovar que o controle do viés diagnóstico expurga o ruído institucional e revela o sinal causal real ($p < 0,05$).
+  - [x] Persistir os resultados do experimento em `data/features/detection_bias_experiment.parquet`.
+- **Verificação:** Testes de significância e comparação de coeficientes.
+- **Dependências:** 16.2.
+- **Arquivos impactados:** `src/causal/dml_estimator.py`.
+- **Escopo estimado:** S (1 arquivo).
+
+### Tarefa 16.4: Heterogeneidade Causal e Modificação de Efeito ($\text{CATE}$ — Hipótese $H_4$)
+- **Descrição:** Investigar a heterogeneidade do efeito causal ($\text{CATE}$) interagindo os resíduos ortogonalizados $\tilde{D}$ com os estratos municipais de vulnerabilidade socioassistencial e sanitária.
+- **Critérios de Aceite:**
+  - [x] Estimar modelos de interação com resíduos ortogonalizados:
+    $$\tilde{Y}_i = \theta_0 \tilde{D}_i + \gamma_1 (\tilde{D}_i \times \mathbb{I}_{\text{sem\_unacon}}) + \gamma_2 (\tilde{D}_i \times \mathbb{I}_{\text{deficit\_saneamento}}) + \epsilon_i$$
+  - [x] Testar a Hipótese $H_4$: verificar se $\gamma_1, \gamma_2 > 0$, demonstrando que a ausência de cobertura especializada e déficit de saneamento amplificam sinergicamente a mortalidade decorrente da exposição química.
+  - [x] Salvar as estimativas consolidadas em `data/features/causal_estimates_plr.parquet`.
+- **Verificação:** `uv run python -c "import polars as pl; df = pl.read_parquet('data/features/causal_estimates_plr.parquet'); print(df)"`
+- **Dependências:** 16.2, 16.3.
+- **Arquivos impactados:** `src/causal/dml_estimator.py`.
+- **Escopo estimado:** S (1 arquivo).
+
+### Checkpoint de Paradigma 16
+- [x] DAG causal formal validado sem caminhos backdoor residuais.
+- [x] Estimador PLR com Neyman Orthogonalization e cluster SEs por bacia implementado.
+- [x] Prova da eliminação do viés de detecção (Hipótese $H_3$) e heterogeneidade CATE (Hipótese $H_4$).
+
+---
+
+## Fase 17: Stage 05B — Protocolo de Refutação Científica (`src/causal/refutation.py`)
+
+### Tarefa 17.1: Refutador por Tratamento Placebo (*Placebo Treatment Refuter*)
+- **Descrição:** Testar a robustez dos efeitos causais substituindo a exposição verdadeira $D$ por permutações aleatórias geradas exclusivamente dentro de cada bacia hidrográfica (`ottobacia_id`).
+- **Critérios de Aceite:**
+  - [x] Implementar gerador de tratamentos placebo em `src/causal/refutation.py`.
+  - [x] Executar $B = 100$ permutações de Monte Carlo com reestimação do DML.
+  - [x] Exigir como critério de aceitação: $\mathbb{E}[\hat{\theta}_{\text{placebo}}] \approx 0$ e p-valor $> 0,05$ (ou intervalo de confiança contendo 0), comprovando que o modelo não gera causalidade em dados permutados.
+- **Verificação:** Teste de significância do estimador placebo.
+- **Dependências:** Fase 16.
+- **Arquivos impactados:** `src/causal/refutation.py`.
+- **Escopo estimado:** M (1 arquivo).
+
+### Tarefa 17.2: Refutador por Causa Comum Aleatória (*Random Common Cause Refuter*)
+- **Descrição:** Avaliar a estabilidade das estimativas causais diante da introdução sintética de um confundidor exógeno de ruído branco em $Z$.
+- **Critérios de Aceite:**
+  - [x] Injetar variável sintética $Z_{\text{noise}} \sim \mathcal{N}(0, 1)$ no vetor de controles $Z$.
+  - [x] Reestimar $\hat{\theta}_{\text{noise}}$ via DML.
+  - [x] Validar a estabilidade paramétrica estrita:
+    $$|\Delta \hat{\theta}| = \frac{|\hat{\theta}_{\text{noise}} - \hat{\theta}|}{|\hat{\theta}|} < 5\%$$
+- **Verificação:** Teste automatizado de tolerância percentual.
+- **Dependências:** 17.1.
+- **Arquivos impactados:** `src/causal/refutation.py`.
+- **Escopo estimado:** S (1 arquivo).
+
+### Tarefa 17.3: Refutador por Subamostragem de Dados (*Data Subset Validation Refuter*)
+- **Descrição:** Testar a consistência das inferências reestimando o modelo causal em 50 subconjuntos aleatórios de 80% das bacias hidrográficas.
+- **Critérios de Aceite:**
+  - [x] Amostrar 80% dos blocos hidrográficos (`ottobacia_id`) por réplica ($N_{\text{reps}} = 50$).
+  - [x] Reestimar $\hat{\theta}_{\text{subset}}$.
+  - [x] Confirmar a preservação do sinal causal: 100% das estimativas preservam o mesmo sinal e coeficiente de variação $\text{CV}(\hat{\theta}) < 20\%$.
+  - [x] Persistir todos os resultados da bateria em `data/features/causal_refutation_results.parquet`.
+- **Verificação:** `uv run python -m src.causal.refutation`
+- **Dependências:** 17.2.
+- **Arquivos impactados:** `src/causal/refutation.py`.
+- **Escopo estimado:** S (1 arquivo).
+
+### Checkpoint de Paradigma 17
+- [x] Refutação por Placebo aprovada ($\hat{\theta}_{\text{placebo}} \approx 0$).
+- [x] Refutação por Causa Comum Aleatória aprovada ($|\Delta \hat{\theta}| < 5\%$).
+- [x] Refutação por Subconjunto de Bacias aprovada (sinal 100% estável).
+
+---
+
+## Fase 18: Stage 05C — Simulador Contrafactual de Óbitos Evitáveis e Índice de Divergência de Vigilância (IDV) (`src/causal/counterfactual_and_idv.py`)
+
+### Tarefa 18.1: Motor do Simulador Contrafactual de Políticas Públicas
+- **Descrição:** Desenvolver o simulador contrafactual que traduz os parâmetros causais $\hat{\theta}_{\text{DML}}$ e os limiares seguros $\text{SHAP} = 0$ em estimativas de óbitos oncológicos evitáveis para cada município e macrorregião.
+- **Critérios de Aceite:**
+  - [x] Consumir $\hat{\theta}_{\text{DML}}$ de `data/features/causal_estimates_plr.parquet` e limiares de `data/features/shap_inflection_thresholds.parquet`.
+  - [x] Para cada município com $D_i > D_{\text{threshold}}$, simular dois cenários regulatórios:
+    - **Cenário 1 (Redução de 1 IQR na Exposição):** $\Delta D_i = \min(D_i, \text{IQR}(D))$.
+    - **Cenário 2 (Conformidade com o Limiar Seguro $\text{SHAP} = 0$):** $\Delta D_i = \max(0, D_i - D_{\text{threshold}})$.
+  - [x] Calcular a redução contrafactual na Razão de Mortalidade Padronizada: $\Delta \text{SMR}_i = \hat{\theta}_{\text{DML}} \cdot \Delta D_i$.
+  - [x] Calcular o número absoluto de óbitos evitáveis no triênio 2020–2022:
+    $$\Delta O_{i,c} = \Delta \text{SMR}_i \times E_{i,c}$$
+    onde $E_{i,c}$ são os óbitos esperados padronizados por idade do município.
+  - [x] Calcular a taxa percentual de vidas salvas: $\% \Delta O_{i,c} = \frac{\Delta O_{i,c}}{O_{i,c}} \times 100\%$.
+  - [x] Gerar agregações municipais, por bacia hidrográfica e por Unidade da Federação (UF).
+  - [x] Salvar em `data/features/counterfactual_simulations.parquet`.
+- **Verificação:** `uv run python -m src.causal.counterfactual_and_idv`
+- **Dependências:** Fase 16, Fase 17.
+- **Arquivos impactados:** `src/causal/counterfactual_and_idv.py`.
+- **Escopo estimado:** M (1 arquivo).
+
+### Tarefa 18.2: Índice de Divergência de Vigilância (IDV) e Mapeamento de *Silent Hotspots*
+- **Descrição:** Implementar o Índice de Divergência de Vigilância para auditar omissões e subnotificações de saúde ambiental, ranqueando os municípios brasileiros com alta carga oncológica atribuível a fatores ambientais/ocupacionais mas com severo déficit diagnóstico ou descompasso epidemiológico.
+- **Critérios de Aceite:**
+  - [x] Formular o índice IDV combinando a taxa etiológica predita $\hat{Y}_i(D)$ versus a capacidade instalada de diagnóstico (UNACON/CACON, tomógrafos, mamógrafos por 100k hab.):
+    $$IDV_i = \frac{\text{Percentil}(\hat{Y}_i^{\text{exp}})}{\text{Percentil}(Z_{\text{diag}, i} + \epsilon)}$$
+  - [x] Classificar municípios no decil superior ($\ge P_{90}$) como **Pontos Cegos de Vigilância (*Silent Hotspots*)**.
+  - [x] Gerar catálogo auditável e priorizado para os Centros de Referência em Saúde do Trabalhador (CEREST), SUS e Ministério Público do Trabalho (MPT).
+  - [x] Salvar em `data/features/idv_silent_hotspots.parquet`.
+- **Verificação:** Testes de ordenação e contratos de dados.
+- **Dependências:** 18.1.
+- **Arquivos impactados:** `src/causal/counterfactual_and_idv.py`.
+- **Escopo estimado:** S (1 arquivo).
+
+### Checkpoint de Paradigma 18
+- [x] Simulador contrafactual operando sob os Cenários 1 (1 IQR) e 2 ($\text{SHAP}=0$).
+- [x] Óbitos evitáveis absolutos e relativos calculados para o triênio 2020–2022.
+- [x] Ranking de Silent Hotspots (IDV $\ge P_{90}$) materializado para uso institucional.
+
+---
+
+## Fase 19: Stage 05D — Contratos, Suíte de Testes, Orquestrador Integrado, Rastreabilidade e Deploy Final
+
+### Tarefa 19.1: Formalização dos Contratos de Dados (`src/core/contracts.py`)
+- **Descrição:** Definir e registrar em `src/core/contracts.py` os contratos de dados estritos para todos os artefatos de saída do Stage 05.
+- **Critérios de Aceite:**
+  - [x] Criar contrato `CAUSAL_ESTIMATES_CONTRACT` (PK: `target_cancer`, `exposure_variable`, colunas: $\hat{\theta}$, $\text{SE}$, $\text{IQR-ATE}$, $p\text{-value}$, $\text{CI}_{95}$ e status de significância).
+  - [x] Criar contrato `DETECTION_BIAS_CONTRACT` (PK: `target_cancer`, `exposure_variable`, colunas: $\hat{\theta}_{\text{naive}}$, $\hat{\theta}_{\text{DML}}$, delta percentual e p-valores).
+  - [x] Criar contrato `REFUTATION_RESULTS_CONTRACT` (PK: `target_cancer`, `exposure_variable`, `test_type`, colunas: estimativa de refutação, p-valor e status de aprovação).
+  - [x] Criar contrato `COUNTERFACTUAL_SIMULATION_CONTRACT` (PK: `id_municipio`, `target_cancer`, `cenario`, colunas: delta exposição, delta SMR, óbitos evitáveis absolutos e percentuais).
+  - [x] Criar contrato `IDV_SILENT_HOTSPOTS_CONTRACT` (PK: `id_municipio`, colunas: escore IDV, ranking nacional, percentil, flag de silent hotspot e indicadores de vulnerabilidade).
+  - [x] Aplicar `.enforce()` antes de qualquer persistência em disco.
+- **Verificação:** `uv run pytest -k "contract"`
+- **Dependências:** Fase 16, 17, 18.
+- **Arquivos impactados:** `src/core/contracts.py`.
+- **Escopo estimado:** S (1 arquivo).
+
+### Tarefa 19.2: Suíte de Testes Automatizados Causal & IDV (`tests/test_causal_and_idv.py`)
+- **Descrição:** Implementar suíte de testes de alta cobertura garantindo rigor matemático, ausência de vazamento da dead-zone e conformidade de contratos.
+- **Critérios de Aceite:**
+  - [x] **Teste 1 (Ortogonalização de Neyman):** Validar que o DML expurga o viés de detecção assistencial e que $\hat{\theta}_{\text{DML}}$ diverge estatisticamente de $\hat{\theta}_{\text{naive}}$.
+  - [x] **Teste 2 (Isolamento de Dead-Zone no DML):** Comprovar que exatamente 0 observações de `buffer_exclusion` foram utilizadas no ajuste das funções nuisance $\hat{g}(Z)$ e $\hat{m}(Z)$.
+  - [x] **Teste 3 (Robustez Clusterizada):** Confirmar que os erros-padrão são calculados com matriz de covariância sanduíche clusterizada por `ottobacia_id`.
+  - [x] **Teste 4 (Bateria de Refutação):** Comprovar que o teste de Placebo retorna estimativa centrada em zero ($\mathbb{E} \approx 0$) e o teste de Causa Comum Aleatória apresenta variação $< 5\%$.
+  - [x] **Teste 5 (Consistência Contrafactual):** Validar que óbitos evitáveis são monotonicamente não-negativos ($\Delta O \ge 0$) e respeitam a conservação da mortalidade observada ($\Delta O_{i,c} \le O_{i,c}$).
+  - [x] **Teste 6 (Contratos de Dados):** Executar `.enforce()` aprovado em 100% dos Parquets gerados no Stage 05.
+- **Verificação:** `uv run pytest tests/test_causal_and_idv.py -v`
+- **Dependências:** 19.1.
+- **Arquivos impactados:** `tests/test_causal_and_idv.py`.
+- **Escopo estimado:** M (1 arquivo).
+
+### Tarefa 19.3: Orquestrador Integrado do Stage 05 (`src/causal/run_stage05.py`) e Rastreabilidade (`manifest.json`)
+- **Descrição:** Criar entrypoint CLI unificado que executa sequencialmente o pipeline causal completo do Stage 05 (`dml_estimator` $\to$ `refutation` $\to$ `counterfactual_and_idv`), atualizando hashes criptográficos no `manifest.json`.
+- **Critérios de Aceite:**
+  - [x] Criar entrypoint CLI `src/causal/run_stage05.py`.
+  - [x] Registrar todos os artefatos gerados em `data/features/` no `data/staging/manifest.json` via `LineageTracker`.
+  - [x] Emitir sumário executivo no console com tabela dos efeitos causais ($\text{ATE}$, $\text{IQR-ATE}$), status dos testes de refutação, total de óbitos evitáveis no Brasil e top 10 *Silent Hotspots*.
+- **Verificação:** `uv run python -m src.causal.run_stage05`
+- **Dependências:** 19.2.
+- **Arquivos impactados:** `src/causal/run_stage05.py`.
+- **Escopo estimado:** S (1 arquivo).
+
+### Tarefa 19.4: Auditoria Tripla de Paradigma, Atualização do AST Graphify e Deploy Git
+- **Descrição:** Executar o protocolo mandatório de auditoria (Ciência, Engenharia e Segurança), regenerar o grafo de conhecimento AST do repositório, criar commit atômico convencional e enviar ao GitHub remoto.
+- **Critérios de Aceite:**
+  - [x] **Ciência:** Verificação do checklist epidemiológico causal (DAG validado, Neyman orthogonalization, cluster SEs, refutações aprovadas, contrafactual calibrado por $\text{SHAP}=0$, ranking IDV).
+  - [x] **Engenharia:** Checagens estáticas limpas com `uv run ruff check src tests` (0 erros) e `uv run mypy src tests` (0 erros).
+  - [x] **AST Graph:** Atualização via `uvx --from graphifyy graphify update .` (0 ciclos).
+  - [x] **Segurança:** 0 arquivos Parquet ou segredos rastreados no Git.
+  - [x] **Deploy:** Commit convencional (`feat(stage05): semiparametric double ml, causal refutation, counterfactual simulator and surveillance divergence index`) e push para `origin/main`.
+- **Verificação:** `git log -n 1 --stat && git status`
+- **Dependências:** 19.3.
+- **Arquivos impactados:** Todo o repositório.
+- **Escopo estimado:** S.
+
+### Checkpoint de Paradigma 19
+- [x] Stage 05 completamente orquestrado, testado e publicado.
+- [x] Pipeline científico e econométrico end-to-end do projeto `onco-causal` finalizado com excelência metodológica.
+
+

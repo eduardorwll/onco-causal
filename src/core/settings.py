@@ -62,12 +62,49 @@ class CnaeLinachGroup(BaseModel):
     cnae_prefixes: list[str]
 
 
+class ConfoundersConfig(BaseModel):
+    assistencial: list[str] = Field(default_factory=list)
+    sanitario: list[str] = Field(default_factory=list)
+    baseline_land_use: list[str] = Field(default_factory=list)
+
+    @property
+    def all_confounders(self) -> list[str]:
+        return self.assistencial + self.sanitario + self.baseline_land_use
+
+
+class ExposuresConfig(BaseModel):
+    agro: str = "prop_lavouras_criticas_mean"
+    linach: str = "prop_linach_mean"
+
+    @property
+    def all_exposures(self) -> list[str]:
+        return [self.agro, self.linach]
+
+
+class VulnerabilityStrataConfig(BaseModel):
+    sem_unacon_col: str = "unacon_cacon_ativos"
+    deficit_saneamento_col: str = "indice_atendimento_total_agua"
+
+
+class SimulationConfig(BaseModel):
+    scenarios: list[str] = Field(default_factory=lambda: ["cenario_1_iqr", "cenario_2_shap_threshold"])
+
+
+class CausalConfig(BaseModel):
+    confounders: ConfoundersConfig = Field(default_factory=ConfoundersConfig)
+    exposures: ExposuresConfig = Field(default_factory=ExposuresConfig)
+    cluster_col: str = "ottobacia_id"
+    vulnerability_strata: VulnerabilityStrataConfig = Field(default_factory=VulnerabilityStrataConfig)
+    simulation: SimulationConfig = Field(default_factory=SimulationConfig)
+
+
 class DomainSpec(BaseModel):
     bigquery: BigQueryConfig
     spatial: SpatialConfig = Field(default_factory=SpatialConfig)
     sampling: SamplingConfig
     oncology_targets: dict[str, TargetSpec]
     cnae_linach_groups: dict[str, CnaeLinachGroup] = Field(default_factory=dict)
+    causal: CausalConfig = Field(default_factory=CausalConfig)
 
     @classmethod
     def from_yaml(cls, path: Path | None = None) -> DomainSpec:

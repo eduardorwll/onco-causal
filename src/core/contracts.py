@@ -302,3 +302,116 @@ BENCHMARK_PREDICTIONS_CONTRACT = DataContract(
         "residual": pl.Float64,
     },
 )
+
+CAUSAL_ESTIMATES_CONTRACT = DataContract(
+    name="causal_estimates_plr",
+    primary_keys=("target_cancer", "exposure_variable"),
+    required_schema={
+        "target_cancer": pl.String,
+        "exposure_variable": pl.String,
+        "theta_dml": pl.Float64,
+        "se_cluster": pl.Float64,
+        "t_stat": pl.Float64,
+        "p_value": pl.Float64,
+        "ci_lower": pl.Float64,
+        "ci_upper": pl.Float64,
+        "iqr_ate": pl.Float64,
+        "gamma_sem_unacon": pl.Float64,
+        "p_value_sem_unacon": pl.Float64,
+        "gamma_deficit_saneamento": pl.Float64,
+        "p_value_deficit_saneamento": pl.Float64,
+        "n_obs": pl.Int64,
+        "n_clusters": pl.Int64,
+        "status": pl.String,
+    },
+)
+
+DETECTION_BIAS_CONTRACT = DataContract(
+    name="detection_bias_experiment",
+    primary_keys=("target_cancer", "exposure_variable"),
+    required_schema={
+        "target_cancer": pl.String,
+        "exposure_variable": pl.String,
+        "theta_naive": pl.Float64,
+        "se_naive": pl.Float64,
+        "p_value_naive": pl.Float64,
+        "theta_dml": pl.Float64,
+        "se_dml": pl.Float64,
+        "p_value_dml": pl.Float64,
+        "delta_pct": pl.Float64,
+        "detection_bias_proven": pl.Boolean,
+        "mechanism_summary": pl.String,
+    },
+)
+
+REFUTATION_RESULTS_CONTRACT = DataContract(
+    name="causal_refutation_results",
+    primary_keys=("target_cancer", "exposure_variable", "test_type"),
+    required_schema={
+        "target_cancer": pl.String,
+        "exposure_variable": pl.String,
+        "test_type": pl.String,
+        "baseline_estimate": pl.Float64,
+        "refutation_estimate": pl.Float64,
+        "refutation_p_value": pl.Float64,
+        "delta_relative": pl.Float64,
+        "passed": pl.Boolean,
+        "conclusion": pl.String,
+    },
+)
+
+COUNTERFACTUAL_SIMULATION_CONTRACT = DataContract(
+    name="counterfactual_simulations",
+    primary_keys=("id_municipio", "ano", "target_cancer", "cenario"),
+    required_schema={
+        "id_municipio": pl.String,
+        "ano": pl.Int64,
+        "target_cancer": pl.String,
+        "cenario": pl.String,
+        "nome_municipio": pl.String,
+        "sigla_uf": pl.String,
+        "ottobacia_id": pl.String,
+        "exposure_variable": pl.String,
+        "exposure_observed": pl.Float64,
+        "exposure_counterfactual": pl.Float64,
+        "delta_exposure": pl.Float64,
+        "smr_observed": pl.Float64,
+        "smr_counterfactual": pl.Float64,
+        "delta_smr": pl.Float64,
+        "obitos_observados": pl.Int64,
+        "obitos_esperados": pl.Float64,
+        "obitos_evitaveis": pl.Float64,
+        "pct_obitos_evitaveis": pl.Float64,
+    },
+    sentinel_null_values={
+        "ottobacia_id": ["", "0", "9999", "None"],
+    },
+)
+
+IDV_SILENT_HOTSPOTS_CONTRACT = DataContract(
+    name="idv_silent_hotspots",
+    primary_keys=("id_municipio",),
+    required_schema={
+        "id_municipio": pl.String,
+        "nome_municipio": pl.String,
+        "sigla_uf": pl.String,
+        "ottobacia_id": pl.String,
+        "populacao_estimada": pl.Int64,
+        "unacon_cacon_ativos": pl.Int64,
+        "leitos_pc_100k": pl.Float64,
+        "tomografos_pc_100k": pl.Float64,
+        "mamografos_pc_100k": pl.Float64,
+        "prop_lavouras_criticas_mean": pl.Float64,
+        "prop_linach_mean": pl.Float64,
+        "rank_exposure_risk": pl.Float64,
+        "rank_diag_capacity": pl.Float64,
+        "idv_score": pl.Float64,
+        "idv_percentile": pl.Float64,
+        "is_silent_hotspot": pl.Boolean,
+        "risk_category": pl.String,
+    },
+    sentinel_null_values={
+        "ottobacia_id": ["", "0", "9999", "None"],
+    },
+)
+

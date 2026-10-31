@@ -150,3 +150,30 @@ cnae_linach_groups:
       - "4921"
       - "4922"
       - "4930"
+
+causal:
+  confounders:
+    assistencial:
+      - "unacon_cacon_ativos"
+      - "leitos_pc_100k"
+      - "tomografos_pc_100k"
+      - "mamografos_pc_100k"
+    sanitario:
+      - "indice_atendimento_total_agua"
+      - "indice_coleta_esgoto"
+      - "indice_tratamento_esgoto"
+    baseline_land_use:
+      - "prop_floresta_mean"
+      - "prop_urbanizada_mean"
+  exposures:
+    agro: "prop_lavouras_criticas_mean"
+    linach: "prop_linach_mean"
+  cluster_col: "ottobacia_id"
+  vulnerability_strata:
+    sem_unacon_col: "unacon_cacon_ativos"
+    deficit_saneamento_col: "indice_atendimento_total_agua"
+  simulation:
+    scenarios:
+      - "cenario_1_iqr"
+      - "cenario_2_shap_threshold"
+
