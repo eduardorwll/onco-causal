@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "updated_at": "2026-10-30T23:51:16.448172+00:00",
+  "updated_at": "2026-10-31T00:28:58.970499+00:00",
   "artifacts": {
     "diretorio_municipios_full": {
       "artifact_name": "diretorio_municipios_full",
@@ -37,9 +37,9 @@
     "rais_linach_anual": {
       "artifact_name": "rais_linach_anual",
       "relative_path": "data/staging/rais_linach_anual.parquet",
-      "sha256": "8cd383eea9c6c3cdfd6a8aac0f8e314813657bed44bccef5ada134da967cec5a",
-      "size_bytes": 156695,
-      "num_rows": 11140,
+      "sha256": "b31583bdd9886b30155bc38ed05ebc9fbb1f76294aa2124a9997b4f980be2f89",
+      "size_bytes": 647939,
+      "num_rows": 66818,
       "num_columns": 5,
       "columns": [
         "id_municipio",
@@ -50,22 +50,22 @@
       ],
       "sql_file": "02_rais_exposicao_linach.sql",
       "sql_sha256": "f8f7794a75270546ae3233a9b00fee5a8abad5ae41e3a98b691f7c340962c8f7",
-      "domain_spec_sha256": "4c6cc1e71a7fbba42c7c7449d2707dd32827037a6072b11dd69c2ced805f1b90",
+      "domain_spec_sha256": "b1acee5f6c327b84e5e445aaa38f0183bd313115905c7b3195f158f9f31cd9fd",
       "parameters": {
-        "ano_inicio": 2021,
+        "ano_inicio": 2015,
         "ano_fim": 2022,
-        "batch_size": 2
+        "batch_size": 1
       },
-      "git_commit": "361fcbf7d8080d6583ddb2354f25d616a585524b",
+      "git_commit": "f6e5171a59dd25bbad8f763944d716f57ea80cfb",
       "git_branch": "main",
-      "timestamp_utc": "2026-10-30T19:07:10.335153+00:00"
+      "timestamp_utc": "2026-10-31T00:11:50.983581+00:00"
     },
     "pam_lavouras_anual": {
       "artifact_name": "pam_lavouras_anual",
       "relative_path": "data/staging/pam_lavouras_anual.parquet",
-      "sha256": "06ca668ab971e28e2786ceea55ddaa18d8350da1deb58078ab8b4d61e3c95ab2",
-      "size_bytes": 175427,
-      "num_rows": 16689,
+      "sha256": "a65a911f5e83f320c5a6ef7faad6554d08c7fab8a03e96f86296c9c980407139",
+      "size_bytes": 1061651,
+      "num_rows": 139075,
       "num_columns": 9,
       "columns": [
         "id_municipio",
@@ -80,14 +80,14 @@
       ],
       "sql_file": "03_pam_lavouras.sql",
       "sql_sha256": "4abef3e1adaa189426610a4275aaf1962c623026f8c9a1fb722a81f1aa65212d",
-      "domain_spec_sha256": "4c6cc1e71a7fbba42c7c7449d2707dd32827037a6072b11dd69c2ced805f1b90",
+      "domain_spec_sha256": "b1acee5f6c327b84e5e445aaa38f0183bd313115905c7b3195f158f9f31cd9fd",
       "parameters": {
-        "ano_inicio": 2020,
+        "ano_inicio": 1998,
         "ano_fim": 2022
       },
-      "git_commit": "361fcbf7d8080d6583ddb2354f25d616a585524b",
+      "git_commit": "f6e5171a59dd25bbad8f763944d716f57ea80cfb",
       "git_branch": "main",
-      "timestamp_utc": "2026-10-30T19:08:00.194860+00:00"
+      "timestamp_utc": "2026-10-31T00:08:28.887527+00:00"
     },
     "controles_assistenciais_snis": {
       "artifact_name": "controles_assistenciais_snis",
@@ -237,6 +237,203 @@
       "git_commit": "30636acc547ffba72f7f4ee53a93b922a1bd44d5",
       "git_branch": "main",
       "timestamp_utc": "2026-10-30T23:51:16.448080+00:00"
+    },
+    "mapbiomas_cobertura_anual": {
+      "artifact_name": "mapbiomas_cobertura_anual",
+      "relative_path": "data/staging/mapbiomas_cobertura_anual.parquet",
+      "sha256": "f5aba7b1bd5e20964985e46b1cb8201f229cc4b1c7603ce78ed817e033a6ee1b",
+      "size_bytes": 4622520,
+      "num_rows": 139300,
+      "num_columns": 7,
+      "columns": [
+        "id_municipio",
+        "ano",
+        "area_agricultura_ha",
+        "area_pastagem_ha",
+        "area_silvicultura_ha",
+        "area_urbanizada_ha",
+        "area_floresta_ha"
+      ],
+      "sql_file": "06_mapbiomas_cobertura.sql",
+      "sql_sha256": "ae61721605805f48f2229fbc12b6e6a65f3fd557e889790a501da79ef68098b1",
+      "domain_spec_sha256": "b1acee5f6c327b84e5e445aaa38f0183bd313115905c7b3195f158f9f31cd9fd",
+      "parameters": {
+        "ano_inicio": 1998,
+        "ano_fim": 2022
+      },
+      "git_commit": "f6e5171a59dd25bbad8f763944d716f57ea80cfb",
+      "git_branch": "main",
+      "timestamp_utc": "2026-10-31T00:10:01.572126+00:00"
+    },
+    "master_analytical_panel": {
+      "artifact_name": "master_analytical_panel",
+      "relative_path": "data/features/master_analytical_panel.parquet",
+      "sha256": "d0b5ca75b62f11252ef7d556c0d1408e96d9620988a7863edaddf5955fa88326",
+      "size_bytes": 1319035,
+      "num_rows": 10275,
+      "num_columns": 37,
+      "columns": [
+        "id_municipio",
+        "ano",
+        "target_cancer",
+        "smr_suavizada_eb",
+        "smr_bruta",
+        "obitos_observados",
+        "obitos_esperados",
+        "peso_encolhimento_w",
+        "prop_lavouras_criticas_mean",
+        "prop_lavouras_criticas_max",
+        "prop_lavouras_criticas_trend",
+        "prop_floresta_mean",
+        "prop_floresta_max",
+        "prop_floresta_trend",
+        "prop_urbanizada_mean",
+        "prop_urbanizada_max",
+        "prop_urbanizada_trend",
+        "prop_linach_mean",
+        "prop_linach_max",
+        "prop_linach_trend",
+        "unacon_cacon_ativos",
+        "leitos_pc_100k",
+        "tomografos_pc_100k",
+        "mamografos_pc_100k",
+        "indice_atendimento_total_agua",
+        "indice_coleta_esgoto",
+        "indice_tratamento_esgoto",
+        "nome_municipio",
+        "sigla_uf",
+        "perfil_amostral",
+        "populacao_estimada",
+        "ottobacia_id",
+        "latitude_sede",
+        "longitude_sede",
+        "x_proj_5070",
+        "y_proj_5070",
+        "area_mun_ha"
+      ],
+      "sql_file": null,
+      "sql_sha256": null,
+      "domain_spec_sha256": "b1acee5f6c327b84e5e445aaa38f0183bd313115905c7b3195f158f9f31cd9fd",
+      "parameters": {
+        "outcome_years": [
+          2020,
+          2021,
+          2022
+        ],
+        "cancer_targets": [
+          "hematologico_infantojuvenil",
+          "respiratorio",
+          "digestivo",
+          "pele_melanoma",
+          "hormoniodependente_urogenital"
+        ],
+        "analytical_cohort_size": 685,
+        "discovery_set_size": 276,
+        "max_discovery_vif": 2.44563588195028
+      },
+      "git_commit": "f6e5171a59dd25bbad8f763944d716f57ea80cfb",
+      "git_branch": "main",
+      "timestamp_utc": "2026-10-31T00:21:07.779309+00:00"
+    },
+    "benchmark_predictions": {
+      "artifact_name": "benchmark_predictions",
+      "relative_path": "data/features/benchmark_predictions.parquet",
+      "sha256": "334cdf73bec86112b367e2ee5a5888855a88385aec019304560913de51105615",
+      "size_bytes": 614150,
+      "num_rows": 41100,
+      "num_columns": 8,
+      "columns": [
+        "id_municipio",
+        "ano",
+        "target_cancer",
+        "model_name",
+        "fold_id",
+        "y_true",
+        "y_pred",
+        "residual"
+      ],
+      "sql_file": null,
+      "sql_sha256": null,
+      "domain_spec_sha256": "b1acee5f6c327b84e5e445aaa38f0183bd313115905c7b3195f158f9f31cd9fd",
+      "parameters": {
+        "models": [
+          "LightGBM",
+          "XGBoost",
+          "TabNet",
+          "TabPFN"
+        ],
+        "n_folds": 5
+      },
+      "git_commit": "f6e5171a59dd25bbad8f763944d716f57ea80cfb",
+      "git_branch": "main",
+      "timestamp_utc": "2026-10-31T00:28:41.163307+00:00"
+    },
+    "benchmark_metrics": {
+      "artifact_name": "benchmark_metrics",
+      "relative_path": "data/features/benchmark_metrics.parquet",
+      "sha256": "995aa1684ad01512165622bf5e43302bb37268974107973944468a651b7e50fa",
+      "size_bytes": 3312,
+      "num_rows": 24,
+      "num_columns": 7,
+      "columns": [
+        "model_name",
+        "scope",
+        "target_cancer",
+        "r2_score",
+        "rmse",
+        "mae",
+        "n_samples"
+      ],
+      "sql_file": null,
+      "sql_sha256": null,
+      "domain_spec_sha256": "b1acee5f6c327b84e5e445aaa38f0183bd313115905c7b3195f158f9f31cd9fd",
+      "parameters": {
+        "models": [
+          "LightGBM",
+          "XGBoost",
+          "TabNet",
+          "TabPFN"
+        ],
+        "n_folds": 5
+      },
+      "git_commit": "f6e5171a59dd25bbad8f763944d716f57ea80cfb",
+      "git_branch": "main",
+      "timestamp_utc": "2026-10-31T00:28:41.165280+00:00"
+    },
+    "shap_inflection_thresholds": {
+      "artifact_name": "shap_inflection_thresholds",
+      "relative_path": "data/features/shap_inflection_thresholds.parquet",
+      "sha256": "2ce89b5766dfc49b56652e92f84527785c973688fdaea9c0f9cefd606e10efd3",
+      "size_bytes": 4986,
+      "num_rows": 36,
+      "num_columns": 7,
+      "columns": [
+        "feature_name",
+        "target_cancer",
+        "inflection_threshold",
+        "shap_at_min",
+        "shap_at_max",
+        "mean_abs_shap",
+        "interpretation"
+      ],
+      "sql_file": null,
+      "sql_sha256": null,
+      "domain_spec_sha256": "b1acee5f6c327b84e5e445aaa38f0183bd313115905c7b3195f158f9f31cd9fd",
+      "parameters": {
+        "model_type": "LightGBMRegressor",
+        "features_analyzed": [
+          "prop_lavouras_criticas_mean",
+          "prop_lavouras_criticas_trend",
+          "prop_linach_mean",
+          "prop_linach_trend",
+          "prop_floresta_mean",
+          "prop_urbanizada_mean"
+        ],
+        "targets_count": 5
+      },
+      "git_commit": "f6e5171a59dd25bbad8f763944d716f57ea80cfb",
+      "git_branch": "main",
+      "timestamp_utc": "2026-10-31T00:28:58.970350+00:00"
     }
   }
 }

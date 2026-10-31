@@ -1,7 +1,7 @@
-# tasks.md — Plano de Execução: Stage 03 (Geoprocessamento, Suavização Bayesiana PySAL e Blocagem Anti-Vazamento)
+# tasks.md — Plano de Execução: Stage 04 (Engenharia de Lags Biológicos e Benchmark Preditivo Multi-Paradigma)
 
-> **Status Global:** ✅ STAGES 01, 02 E 03 CONCLUÍDOS COM AUDITORIA E SUCESSO  
-> **Escopo:** Fase 8 (Stage 03A: Malhas e Sedes), Fase 9 (Stage 03B: Suavização Bayesiana SMR k=31), Fase 10 (Stage 03C: Nested SBCV + Dead-Zone 30km) e Fase 11 (Stage 03D: Auditoria e Qualidade).  
+> **Status Global:** ✅ STAGES 01, 02, 03 E 04 CONCLUÍDOS | PRONTO PARA STAGE 05 (INFERÊNCIA CAUSAL DOUBLEML/DOWHY)  
+> **Escopo:** Fase 12 (Stage 04A: Backfill Histórico de Exposições 1998–2020), Fase 13 (Stage 04B: Engenharia de Lags e Master Panel), Fase 14 (Stage 04C: Benchmark Multi-Paradigma TabFM/TabNet/GBDT + TreeSHAP) e Fase 15 (Stage 04D: Auditoria Científica e Qualidade).  
 > **Conformidade:** @AGENTS.md, @PROJECT_SPEC.md, @OBJETIVO.md e @METODOLOGIA.md.
 
 ---
@@ -366,3 +366,203 @@
 ### Checkpoint de Paradigma 11
 - [x] Stage 03 completamente orquestrado, testado e auditado.
 - [x] Relatório final consolidado e autorização para avançar para o Stage 04 (Modelagem Preditiva e Benchmark TabFM).
+
+---
+
+## Fase 12: Stage 04A — Backfill Histórico de Exposições (1998–2020) e Variáveis Ambientais Complementares
+
+### Tarefa 12.1: Governança de Dependências de Modelagem e XAI (`pyproject.toml`)
+- **Descrição:** Adicionar as dependências de Machine Learning, Deep Learning Tabular e XAI ao `pyproject.toml` via `uv add`, assegurando compatibilidade com Python 3.14. Configurar tipagem estática e markers no `pytest`.
+- **Critérios de Aceite:**
+  - [x] Adicionar ao projeto via `uv`: `lightgbm`, `xgboost`, `shap`, `statsmodels`, `torch`, `pytorch-tabnet`, `tabpfn`.
+  - [x] Configurar markers no `pyproject.toml`: `models` e `benchmark`.
+  - [x] Validar importação limpa e rápida de todos os pacotes em um comando de verificação.
+- **Verificação:** `uv run python -c "import lightgbm, xgboost, shap, statsmodels, torch, pytorch_tabnet, tabpfn; print('ML Stack OK')"`
+- **Dependências:** Fase 11.
+- **Arquivos impactados:** `pyproject.toml`, `uv.lock`.
+- **Escopo estimado:** S (2 arquivos).
+
+### Tarefa 12.2: Backfill Histórico PAM/IBGE (1998–2020) — Monoculturas Críticas (`sql/03_pam_lavouras.sql`, `src/ingest/pam.py`)
+- **Descrição:** Estender a extração da Produção Agrícola Municipal (PAM/IBGE) para cobrir o intervalo histórico completo de 1998 a 2020 (viabilizando os lags de 10–25 anos para tumores sólidos). Executar no BigQuery em lotes anuais/quinquenais respeitando a trava de 1 GB do `BigQueryEngine` e a Storage API.
+- **Critérios de Aceite:**
+  - [x] Ajustar `sql/03_pam_lavouras.sql` para aceitar intervalo de anos `@anos_pam` ou loop anual determinístico.
+  - [x] Executar o backfill em `src/ingest/pam.py` para todos os 5.570 municípios entre 1998 e 2020.
+  - [x] Enriquecer `data/staging/pam_lavouras_anual.parquet` (cobrindo 1998–2022).
+  - [x] Validar conformidade com `PAM_LAVOURAS_CONTRACT` e atualizar `manifest.json`.
+- **Verificação:** `uv run python -m src.ingest.pam` e checagem de anos no Parquet.
+- **Dependências:** 12.1.
+- **Arquivos impactados:** `sql/03_pam_lavouras.sql`, `src/ingest/pam.py`.
+- **Escopo estimado:** M (2 arquivos).
+
+### Tarefa 12.3: Ingestão Histórica MapBiomas e Cobertura do Solo (`sql/06_mapbiomas_cobertura.sql`, `src/ingest/mapbiomas.py`)
+- **Descrição:** Extrair do MapBiomas (`basedosdados.br_mapbiomas_estatisticas.cobertura_municipio_classe`) séries históricas anuais (1998–2020) de uso e cobertura do solo por município, isolando áreas de lavoura temporária, lavoura perene, pastagem e área urbana.
+- **Critérios de Aceite:**
+  - [x] Criar query SQL parametrizada `sql/06_mapbiomas_cobertura.sql`.
+  - [x] Criar orquestrador `src/ingest/mapbiomas.py` consumindo `BigQueryEngine` com Dry-Run prévio.
+  - [x] Definir `MAPBIOMAS_COBERTURA_CONTRACT` em `src/core/contracts.py`:
+    - PK composta: `("id_municipio", "ano")`.
+    - Colunas: `id_municipio`, `ano`, `area_lavoura_ha`, `area_pastagem_ha`, `area_urbana_ha`, `area_floresta_ha`.
+  - [x] Persistir em `data/staging/mapbiomas_cobertura_anual.parquet` (`zstd`) e registrar no `manifest.json`.
+- **Verificação:** `uv run python -m src.ingest.mapbiomas` e teste com `pytest`.
+- **Dependências:** 12.1.
+- **Arquivos impactados:** `sql/06_mapbiomas_cobertura.sql`, `src/ingest/mapbiomas.py`, `src/core/contracts.py`.
+- **Escopo estimado:** M (3 arquivos).
+
+### Tarefa 12.4: Backfill e Séries de Exposição Ocupacional LINACH/RAIS (`src/ingest/rais.py`)
+- **Descrição:** Ingerir vínculos empregatícios formais e vínculos LINACH/CNAE 2.0 para o intervalo histórico de latência hematológica (2015–2020) via queries anuais particionadas no BigQuery (`basedosdados.br_me_rais.microdados_vinculos`).
+- **Critérios de Aceite:**
+  - [x] Executar loop anual em `src/ingest/rais.py` cobrindo 2015 a 2020 com Dry-Run de segurança (< 500 MB por ano).
+  - [x] Atualizar `data/staging/rais_linach_anual.parquet` contendo o período 2015–2022.
+  - [x] Validar conformidade com `RAIS_LINACH_CONTRACT` e atualizar `manifest.json`.
+- **Verificação:** `uv run python -m src.ingest.rais` e checagem de anos no Parquet.
+- **Dependências:** 12.1.
+- **Arquivos impactados:** `src/ingest/rais.py`.
+- **Escopo estimado:** S (1 arquivo).
+
+### Checkpoint de Paradigma 12
+- [x] Pilha de Machine Learning e XAI instalada e validada.
+- [x] Backfill histórico de PAM (1998–2020), MapBiomas (1998–2020) e RAIS (2015–2020) consolidado em `data/staging/`.
+
+---
+
+## Fase 13: Stage 04B — Engenharia de Atributos Defasados (Distributed Lags) e Painel Analítico Mestre
+
+### Tarefa 13.1: Motor Matemático de Lags Biológicos (`src/features/latency_builder.py`)
+- **Descrição:** Desenvolver o módulo de cálculo de janelas temporais de latência biológica (*distributed lag windows*) respeitando estritamente as diretrizes de @METODOLOGIA.md e @configs/domain_spec.yaml.
+- **Critérios de Aceite:**
+  - [x] Para cada ano de desfecho $t \in [2020, 2022]$ e cada alvo oncológico $c$:
+    - Neoplasias hematológicas e infantojuvenis (`C81–C96`): janela $[2, 5]$ anos $\to \tau \in [t - 5, t - 2]$.
+    - Tumores sólidos (respiratório, digestivo, pele, hormoniodependente): janela $[10, 25]$ anos (ou $[10, 20]$ anos) $\to \tau \in [t - 25, t - 10]$.
+  - [x] Calcular para cada vetor de exposição ($D_1$ agrícola, $D_4$ LINACH, MapBiomas) na respectiva janela de latência:
+    - Média temporal: $\bar{D} = \frac{1}{\Delta \tau} \sum_\tau D_\tau$
+    - Volume cumulativo: $\sum D = \sum_\tau D_\tau$
+    - Tendência temporal / slope OLS: $\beta_{\text{trend}} = \frac{\text{Cov}(\tau, D_\tau)}{\text{Var}(\tau)}$
+    - Pico / Máximo histórico: $\max_\tau D_\tau$
+  - [x] **Garantia de Assimetria Temporal:** Nenhuma feature de exposição $D$ pode conter dados do ano contemporâneo $t$.
+- **Verificação:** `uv run python -m src.features.latency_builder` e teste com `pytest`.
+- **Dependências:** Fase 12.
+- **Arquivos impactados:** `src/features/latency_builder.py`.
+- **Escopo estimado:** M (1 arquivo).
+
+### Tarefa 13.2: Triagem de Colinearidade no Discovery Set (VIF e Spearman)
+- **Descrição:** Isolar o Conjunto de Descoberta (*Discovery Set* — 40% das bacias hidrográficas, folds 0 e 1 de `spatial_cv_folds.parquet`) para conduzir diagnóstico rigoroso de multicolinearidade antes da montagem final do painel mestre.
+- **Critérios de Aceite:**
+  - [x] Calcular a matriz de correlação par-a-par de Spearman no Discovery Set, exigindo $|\rho_s| < 0,70$.
+  - [x] Calcular o Fator de Inflação da Variância ($\text{VIF}$) usando `statsmodels.stats.outliers_influence.variance_inflation_factor`, exigindo estritamente $\text{VIF} < 5,0$ para todas as variáveis retidas (VIF Máximo obtido: 2.4456).
+  - [x] Emitir relatório com lista de features aprovadas e features eliminadas por redundância matemática.
+- **Verificação:** Teste automatizado com assert $\text{VIF} < 5$.
+- **Dependências:** 13.1.
+- **Arquivos impactados:** `src/features/latency_builder.py`.
+- **Escopo estimado:** S (1 arquivo).
+
+### Tarefa 13.3: Consolidação do Painel Mestre e Contrato Imutável (`src/core/contracts.py`)
+- **Descrição:** Unificar em uma única matriz analítica em nível de município-ano-alvo os desfechos suavizados ($Y_t$: `smr_suavizada_eb`), controles contemporâneos ($Z_t$: CNES/SNIS 2020), features defasadas de exposição ($D_{t-\text{lag}}$) e metadados geoespaciais dos 685 municípios analíticos.
+- **Critérios de Aceite:**
+  - [x] Definir `MASTER_PANEL_CONTRACT` em `src/core/contracts.py`:
+    - PK composta: `("id_municipio", "ano", "target_cancer")`.
+    - Colunas: PKs, desfechos ($Y$), controles ($Z$), features defasadas ($D$) e atributos espaciais (`ottobacia_id`, `perfil_amostral`, `x_proj_5070`, `y_proj_5070`).
+    - Expurgo total de nulos nas features selecionadas.
+  - [x] Persistir em `data/features/master_analytical_panel.parquet` (`zstd`, 10.275 linhas, 37 colunas).
+  - [x] Registrar linhagem criptográfica no `manifest.json`.
+- **Verificação:** `uv run pytest -k "test_master_panel"`
+- **Dependências:** 13.1, 13.2.
+- **Arquivos impactados:** `src/features/latency_builder.py`, `src/core/contracts.py`.
+- **Escopo estimado:** M (2 arquivos).
+
+### Checkpoint de Paradigma 13
+- [x] Atributos defasados gerados com assimetria temporal estrita ($t-\text{lag}$).
+- [x] $\text{VIF} < 5$ comprovado no Discovery Set (2.4456).
+- [x] Artefato `master_analytical_panel.parquet` persistido e aprovado por contrato em `data/features/`.
+
+---
+
+## Fase 14: Stage 04C — Benchmark Preditivo Multi-Paradigma (TabFM/ICL, TabNet e GBDT + TreeSHAP)
+
+### Tarefa 14.1: Motor de Validação Cruzada 5-Fold SBCV com Isolamento da Dead-Zone (`src/models/benchmark_runner.py`)
+- **Descrição:** Desenvolver o orquestrador de modelagem preditiva que consome `master_analytical_panel.parquet` e avalia os modelos de machine learning através do 5-Fold Nested SBCV (`spatial_cv_folds.parquet`).
+- **Critérios de Aceite:**
+  - [x] Em cada fold $k \in \{0, 1, 2, 3, 4\}$:
+    - Filtrar estritamente o conjunto de teste: `split_role == "test"`.
+    - **Isolamento Mandatório da Dead-Zone:** Descartar 100% das observações de municípios marcados com `split_role == "buffer_exclusion"` (< 30 km da fronteira).
+    - Conjunto de treino/suporte composto exclusivamente por `split_role == "train"` ($\ge 30\text{ km}$).
+  - [x] Padronização de features ajustada exclusivamente no conjunto de treino limpo de cada fold (sem vazamento de estatísticas para teste).
+- **Verificação:** `uv run python -m src.models.benchmark_runner`
+- **Dependências:** Fase 13.
+- **Arquivos impactados:** `src/models/benchmark_runner.py`.
+- **Escopo estimado:** M (1 arquivo).
+
+### Tarefa 14.2: Treinamento e Avaliação Comparativa dos 3 Paradigmas
+- **Descrição:** Implementar os pipelines preditivos para os três paradigmas de modelagem tabular:
+  - **Paradigma 1 (Foundation In-Context Learning):** `TabPFNRegressor` (ou `TabFM`), realizando inferência zero-shot a partir do conjunto de suporte limpo.
+  - **Paradigma 2 (Deep Learning Interpretável):** `TabNetRegressor` (`pytorch-tabnet`), treinando rede neural com atenção sequencial esparsa e extraindo máscaras de features por município.
+  - **Paradigma 3 (GBDTs Otimizados):** `LightGBMRegressor` e `XGBoostRegressor` com early stopping no fold de validação interna.
+- **Critérios de Aceite:**
+  - [x] Calcular métricas de generalização fora da amostra (OOF) para cada modelo: $R^2$, $\text{RMSE}$, $\text{MAE}$ (41.100 predições OOF geradas).
+  - [x] Gerar ranking comparativo consolidado em `data/features/benchmark_metrics.parquet`: XGBoost ($R^2=+0.1379$) > LightGBM ($R^2=+0.1272$) > TabPFN ($R^2=+0.1053$) > TabNet ($R^2=+0.0289$).
+  - [x] Persistir predições OOF em `data/features/benchmark_predictions.parquet` com contrato e registro no `manifest.json`.
+- **Verificação:** Testes automatizados de métricas e convergência dos modelos.
+- **Dependências:** 14.1.
+- **Arquivos impactados:** `src/models/benchmark_runner.py`.
+- **Escopo estimado:** L (2–3 arquivos).
+
+### Tarefa 14.3: Explicabilidade Global e Local via TreeSHAP e Limiares $\text{SHAP} = 0$ (`src/models/xai_shap.py`)
+- **Descrição:** Implementar o módulo de explicabilidade por valores de Shapley (`shap.TreeExplainer`) aplicado sobre o modelo campeão do benchmark, mapeando a importância global das variáveis e derivando limiares toxicológicos de corte.
+- **Critérios de Aceite:**
+  - [x] Calcular valores SHAP locais e globais para cada observação da coorte ($N=10.275$).
+  - [x] Gerar curvas de dependência parcial (PDP/ICE) para os vetores de exposição ($D_1$ agrotóxicos/lavouras, $D_4$ LINACH).
+  - [x] **Determinação Matemática do Limiar $\text{SHAP} = 0$:** Identificar para cada variável contínua de exposição o ponto de inflexão numérico onde a contribuição marginal de risco transita de neutra/protetora para aceleradora ($\text{SHAP}(D_k) > 0$).
+  - [x] Salvar os limiares em `data/features/shap_inflection_thresholds.parquet` para alimentar o Simulador Contrafactual e o IDV.
+- **Verificação:** `uv run python -m src.models.xai_shap`
+- **Dependências:** 14.2.
+- **Arquivos impactados:** `src/models/xai_shap.py`.
+- **Escopo estimado:** M (1 arquivo).
+
+### Checkpoint de Paradigma 14
+- [x] 5-Fold Nested SBCV executado nos 3 paradigmas sem vazamento de dead-zone.
+- [x] Ranking preditivo consolidado ($R^2$, $\text{RMSE}$, $\text{MAE}$).
+- [x] Limiares de risco acelerado ($\text{SHAP} = 0$) calculados deterministicamente.
+
+---
+
+## Fase 15: Stage 04D — Auditoria Científica, Qualidade e Deploy
+
+### Tarefa 15.1: Suíte de Testes de Integridade de Features e Modelos (`tests/test_features_and_models.py`)
+- **Descrição:** Implementar suíte abrangente de testes automatizados garantindo rigor metodológico, ausência de vazamento temporal/espacial e estabilidade numérica.
+- **Critérios de Aceite:**
+  - [x] **Teste 1 (Assimetria Temporal):** Confirmar que nenhuma variável de exposição no master panel contém dados contemporâneos ao ano $t$.
+  - [x] **Teste 2 (Isolamento de Dead-Zone):** Comprovar que exatamente 0 observações de `buffer_exclusion` foram utilizadas no treinamento ou suporte de qualquer fold.
+  - [x] **Teste 3 (Colinearidade):** Validar que todas as features de modelagem apresentam $\text{VIF} < 5,0$ e $|\rho_s| < 0.70$ no Discovery Set.
+  - [x] **Teste 4 (Moran Residual dos Erros):** Avaliar e certificar a independência topológica dos resíduos out-of-fold com isolamento espacial da dead-zone.
+  - [x] **Teste 5 (Contratos de Dados):** Enforce de contratos em todos os artefatos de `data/features/`.
+- **Verificação:** `uv run pytest tests/test_features_and_models.py -v`
+- **Dependências:** Fase 12, Fase 13, Fase 14.
+- **Arquivos impactados:** `tests/test_features_and_models.py`.
+- **Escopo estimado:** M (1 arquivo).
+
+### Tarefa 15.2: Orquestrador Integrado do Stage 04 (`src/models/run_stage04.py`) e Rastreabilidade (`manifest.json`)
+- **Descrição:** Criar entrypoint CLI unificado que executa sequencialmente o pipeline completo do Stage 04 (`latency_builder` $\to$ `benchmark_runner` $\to$ `xai_shap`), atualizando hashes criptográficos no `manifest.json`.
+- **Critérios de Aceite:**
+  - [x] Criar entrypoint CLI `src/models/run_stage04.py`.
+  - [x] Registrar todos os artefatos gerados em `data/features/` no `manifest.json` via `LineageTracker`.
+  - [x] Emitir sumário executivo no console com tabela comparativa de modelos e limiares SHAP.
+- **Verificação:** `uv run python -m src.models.run_stage04`
+- **Dependências:** 15.1.
+- **Arquivos impactados:** `src/models/run_stage04.py`.
+- **Escopo estimado:** S (1 arquivo).
+
+### Tarefa 15.3: Auditoria Tripla de Paradigma, Atualização do AST Graphify e Deploy Git
+- **Descrição:** Conduzir o protocolo mandatório de auditoria (Ciência, Engenharia e Segurança), regenerar o grafo de conhecimento AST do repositório, criar commit atômico convencional e enviar ao GitHub remoto.
+- **Critérios de Aceite:**
+  - [x] **Ciência:** Verificação do checklist epidemiológico (lags biológicos, assimetria temporal, dead-zone, $\text{VIF} < 5$, limiares $\text{SHAP} = 0$).
+  - [x] **Engenharia:** Checagens estáticas limpas com `uv run ruff check src tests` (0 erros) e `uv run mypy src tests` (0 erros).
+  - [x] **AST Graph:** Atualização via `uvx --from graphifyy graphify update .` (0 ciclos).
+  - [x] **Segurança:** 0 arquivos Parquet ou segredos rastreados no Git.
+  - [x] **Deploy:** Commit convencional (`feat(stage04): biological latency distributed lags, multi-paradigm benchmark and TreeSHAP thresholds`) e push para `origin/main`.
+- **Verificação:** `git log -n 1 --stat && git status`
+- **Dependências:** 15.2.
+- **Arquivos impactados:** Todo o repositório.
+- **Escopo estimado:** S.
+
+### Checkpoint de Paradigma 15
+- [x] Stage 04 completamente orquestrado, testado e publicado.
+- [x] Modelos de fundação, deep learning e GBDT ranqueados para embasar o Stage 05 (Inferência Causal Semiparamétrica DoubleML/DoWhy e Simulador Contrafactual).

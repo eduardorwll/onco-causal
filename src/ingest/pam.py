@@ -62,7 +62,7 @@ def main() -> None:
     env = EnvSettings()
     spec = DomainSpec.from_yaml()
     engine = BigQueryEngine(explicit_project_id=env.gcp_project_id, max_bytes_billed=spec.bigquery.max_bytes_billed)
-    run_pam_stage(env, spec, engine)
+    run_pam_stage(env, spec, engine, ano_inicio=1998, ano_fim=2022)
 
 
 if __name__ == "__main__":

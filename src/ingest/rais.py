@@ -31,34 +31,35 @@ def run_rais_stage(
     env: EnvSettings,
     spec: DomainSpec,
     engine: BigQueryEngine,
+    years_list: list[int] | None = None,
     ano_inicio: int = 2015,
-    ano_fim: int = 2024,
-    batch_size: int = 3,
+    ano_fim: int = 2022,
+    batch_size: int = 1,
 ) -> pl.DataFrame:
-    """Extrai série temporal de exposição ocupacional da RAIS em lotes de anos seguros."""
+    """Extrai série temporal de exposição ocupacional da RAIS ano a ano mantendo Dry-Run < 500 MB."""
     env.staging_dir.mkdir(parents=True, exist_ok=True)
     sql_file = env.sql_dir / "02_rais_exposicao_linach.sql"
     cnae_3, cnae_4 = get_cnae_prefixes(spec)
 
+    target_years = years_list or list(range(ano_inicio, ano_fim + 1))
     logger.info(
-        f"Iniciando ingestão RAIS [{ano_inicio}-{ano_fim}] com {len(cnae_3)} prefixos 3d e {len(cnae_4)} prefixos 4d..."
+        f"Iniciando ingestão RAIS para os anos {target_years} com {len(cnae_3)} prefixos 3d e {len(cnae_4)} prefixos 4d..."
     )
 
     dfs: list[pl.DataFrame] = []
-    for start_year in range(ano_inicio, ano_fim + 1, batch_size):
-        end_year = min(start_year + batch_size - 1, ano_fim)
-        logger.info(f"Consultando RAIS no BigQuery para o lote {start_year}-{end_year}...")
-        df_batch = engine.query_from_file(
+    for y in target_years:
+        logger.info(f"Consultando RAIS no BigQuery para o ano {y}...")
+        df_year = engine.query_from_file(
             sql_path=sql_file,
             params={
-                "ano_inicio": start_year,
-                "ano_fim": end_year,
+                "ano_inicio": y,
+                "ano_fim": y,
                 "cnae_prefixes_3": cnae_3,
                 "cnae_prefixes_4": cnae_4,
             },
             use_cache=spec.bigquery.use_cache,
         )
-        dfs.append(df_batch)
+        dfs.append(df_year)
 
     df_raw = pl.concat(dfs).sort(["id_municipio", "ano"])
 
@@ -98,7 +99,9 @@ def main() -> None:
     env = EnvSettings()
     spec = DomainSpec.from_yaml()
     engine = BigQueryEngine(explicit_project_id=env.gcp_project_id, max_bytes_billed=spec.bigquery.max_bytes_billed)
-    run_rais_stage(env, spec, engine)
+    # 2006-2012 (latência longa tumores sólidos) + 2015-2022 (latência curta hematológicos e recente)
+    years = [2006, 2008, 2010, 2012, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022]
+    run_rais_stage(env, spec, engine, years_list=years)
 
 
 if __name__ == "__main__":

@@ -228,3 +228,77 @@ SPATIAL_CV_FOLDS_CONTRACT = DataContract(
         "ottobacia_id": ["", "0", "9999", "None"],
     },
 )
+
+MAPBIOMAS_COBERTURA_CONTRACT = DataContract(
+    name="mapbiomas_cobertura_anual",
+    primary_keys=("id_municipio", "ano"),
+    required_schema={
+        "id_municipio": pl.String,
+        "ano": pl.Int64,
+        "area_agricultura_ha": pl.Float64,
+        "area_pastagem_ha": pl.Float64,
+        "area_silvicultura_ha": pl.Float64,
+        "area_urbanizada_ha": pl.Float64,
+        "area_floresta_ha": pl.Float64,
+    },
+)
+
+MASTER_PANEL_CONTRACT = DataContract(
+    name="master_analytical_panel",
+    primary_keys=("id_municipio", "ano", "target_cancer"),
+    required_schema={
+        "id_municipio": pl.String,
+        "ano": pl.Int64,
+        "target_cancer": pl.String,
+        "nome_municipio": pl.String,
+        "sigla_uf": pl.String,
+        "perfil_amostral": pl.String,
+        "ottobacia_id": pl.String,
+        "latitude_sede": pl.Float64,
+        "longitude_sede": pl.Float64,
+        "x_proj_5070": pl.Float64,
+        "y_proj_5070": pl.Float64,
+        "populacao_estimada": pl.Int64,
+        "area_mun_ha": pl.Float64,
+        "smr_suavizada_eb": pl.Float64,
+        "smr_bruta": pl.Float64,
+        "obitos_observados": pl.Int64,
+        "obitos_esperados": pl.Float64,
+        "peso_encolhimento_w": pl.Float64,
+        "prop_lavouras_criticas_mean": pl.Float64,
+        "prop_lavouras_criticas_max": pl.Float64,
+        "prop_lavouras_criticas_trend": pl.Float64,
+        "prop_floresta_mean": pl.Float64,
+        "prop_floresta_trend": pl.Float64,
+        "prop_urbanizada_mean": pl.Float64,
+        "prop_urbanizada_trend": pl.Float64,
+        "prop_linach_mean": pl.Float64,
+        "prop_linach_max": pl.Float64,
+        "prop_linach_trend": pl.Float64,
+        "unacon_cacon_ativos": pl.Int64,
+        "leitos_pc_100k": pl.Float64,
+        "tomografos_pc_100k": pl.Float64,
+        "mamografos_pc_100k": pl.Float64,
+        "indice_atendimento_total_agua": pl.Float64,
+        "indice_coleta_esgoto": pl.Float64,
+        "indice_tratamento_esgoto": pl.Float64,
+    },
+    sentinel_null_values={
+        "ottobacia_id": ["", "0", "9999", "None"],
+    },
+)
+
+BENCHMARK_PREDICTIONS_CONTRACT = DataContract(
+    name="benchmark_predictions",
+    primary_keys=("id_municipio", "ano", "target_cancer", "model_name"),
+    required_schema={
+        "id_municipio": pl.String,
+        "ano": pl.Int64,
+        "target_cancer": pl.String,
+        "model_name": pl.String,
+        "fold_id": pl.Int64,
+        "y_true": pl.Float64,
+        "y_pred": pl.Float64,
+        "residual": pl.Float64,
+    },
+)
