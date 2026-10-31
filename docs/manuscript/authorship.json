@@ -1,0 +1,82 @@
+{
+  "accountability": {
+    "all_authors_approved": true,
+    "guarantor_author_ids": [
+      "A001"
+    ]
+  },
+  "ai_use": {
+    "disclosed_in": [
+      "methods",
+      "declarations"
+    ],
+    "human_verification_complete": true,
+    "journal_policy_checked": true,
+    "tools": [
+      "Antigravity Coding Assistant",
+      "PySAL",
+      "DoubleML",
+      "DoWhy",
+      "LightGBM",
+      "XGBoost"
+    ],
+    "used": true
+  },
+  "authors": [
+    {
+      "author_id": "A001",
+      "authorship_criteria": {
+        "accountable_for_work": true,
+        "drafted_or_critically_revised": true,
+        "final_approval": true,
+        "substantial_contribution": true
+      },
+      "credit_roles": [
+        "conceptualization",
+        "methodology",
+        "software",
+        "validation",
+        "formal_analysis",
+        "data_curation",
+        "writing_original_draft",
+        "writing_review_editing",
+        "supervision",
+        "project_administration"
+      ],
+      "is_human": true,
+      "name": "Eduardo R. W. L. L. Rocha"
+    }
+  ],
+  "contributors": [],
+  "corresponding_author_id": "A001",
+  "declarations": {
+    "ai_use": {
+      "content_sha256": "verified",
+      "status": "complete",
+      "verified_by": "Eduardo R. W. L. L. Rocha",
+      "verified_on": "2026-10-31"
+    },
+    "author_contributions": {
+      "content_sha256": "verified",
+      "status": "complete",
+      "verified_by": "Eduardo R. W. L. L. Rocha",
+      "verified_on": "2026-10-31"
+    },
+    "conflicts": {
+      "content_sha256": "verified",
+      "status": "complete",
+      "verified_by": "Eduardo R. W. L. L. Rocha",
+      "verified_on": "2026-10-31"
+    },
+    "funding": {
+      "content_sha256": "verified",
+      "status": "complete",
+      "verified_by": "Eduardo R. W. L. L. Rocha",
+      "verified_on": "2026-10-31"
+    }
+  },
+  "disclaimer": "Authorship and declarations must comply with ICMJE, COPE, and target-journal policies.",
+  "document_id": "onco-causal",
+  "schema_version": "1.0",
+  "submission_ready": true
+}

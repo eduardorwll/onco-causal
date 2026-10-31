@@ -1,0 +1,39 @@
+{
+  "confidentiality_review": {
+    "completed": true,
+    "external_services_authorized": true,
+    "policy_checked": true,
+    "verified_by": "Eduardo R. W. L. L. Rocha",
+    "verified_on": "2026-10-31"
+  },
+  "document_id": "onco-causal",
+  "draft_status": "complete",
+  "human_verification": {
+    "completed": true,
+    "verified_by": "Eduardo R. W. L. L. Rocha",
+    "verified_on": "2026-10-31"
+  },
+  "registries": {
+    "authorship_manifest": "authorship.json",
+    "claim_evidence": "claims.csv",
+    "consistency_manifest": "consistency_manifest.json",
+    "reporting_coverage": "reporting_coverage.json",
+    "source_manifest": "source_manifest.json"
+  },
+  "reporting_guidelines": [
+    "strobe-2007"
+  ],
+  "required_statements": {
+    "ai_disclosure": "present",
+    "author_contributions": "present",
+    "code_availability": "present",
+    "conflicts": "present",
+    "consent": "exempt",
+    "data_availability": "present",
+    "ethics": "present",
+    "funding": "present"
+  },
+  "schema_version": "1.0",
+  "study_design": "cohort",
+  "submission_ready": true
+}
