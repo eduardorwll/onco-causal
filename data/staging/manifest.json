@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "updated_at": "2026-10-31T00:51:53.192726+00:00",
+  "updated_at": "2026-10-31T15:28:17.721175+00:00",
   "artifacts": {
     "diretorio_municipios_full": {
       "artifact_name": "diretorio_municipios_full",
@@ -418,7 +418,7 @@
       ],
       "sql_file": null,
       "sql_sha256": null,
-      "domain_spec_sha256": "b1acee5f6c327b84e5e445aaa38f0183bd313115905c7b3195f158f9f31cd9fd",
+      "domain_spec_sha256": "9f0de97094c08253496f99f3afbbd9613837417be600d9ee340be829a8cec0b4",
       "parameters": {
         "model_type": "LightGBMRegressor",
         "features_analyzed": [
@@ -431,9 +431,9 @@
         ],
         "targets_count": 5
       },
-      "git_commit": "f6e5171a59dd25bbad8f763944d716f57ea80cfb",
+      "git_commit": "c218d944bfab60e11d8545fd507542dc4e074507",
       "git_branch": "main",
-      "timestamp_utc": "2026-10-31T00:28:58.970350+00:00"
+      "timestamp_utc": "2026-10-31T15:28:17.720947+00:00"
     },
     "causal_estimates_plr": {
       "artifact_name": "causal_estimates_plr",

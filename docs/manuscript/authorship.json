@@ -44,7 +44,7 @@
         "project_administration"
       ],
       "is_human": true,
-      "name": "Eduardo R. W. L. L. Rocha"
+      "name": "Eduardo Rewell"
     }
   ],
   "contributors": [],
@@ -53,25 +53,25 @@
     "ai_use": {
       "content_sha256": "verified",
       "status": "complete",
-      "verified_by": "Eduardo R. W. L. L. Rocha",
+      "verified_by": "Eduardo Rewell",
       "verified_on": "2026-10-31"
     },
     "author_contributions": {
       "content_sha256": "verified",
       "status": "complete",
-      "verified_by": "Eduardo R. W. L. L. Rocha",
+      "verified_by": "Eduardo Rewell",
       "verified_on": "2026-10-31"
     },
     "conflicts": {
       "content_sha256": "verified",
       "status": "complete",
-      "verified_by": "Eduardo R. W. L. L. Rocha",
+      "verified_by": "Eduardo Rewell",
       "verified_on": "2026-10-31"
     },
     "funding": {
       "content_sha256": "verified",
       "status": "complete",
-      "verified_by": "Eduardo R. W. L. L. Rocha",
+      "verified_by": "Eduardo Rewell",
       "verified_on": "2026-10-31"
     }
   },
